@@ -1,0 +1,17 @@
+[package]
+name = "wetris"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+message-io = { version = "0.18", default-features = false, features = ["tcp", "websocket"] }
+device_query = "2.0.0"
+rand = "0.8.5"
+
+[[bin]]
+name = "server"
+path = "bin/server.rs"
+
+[[bin]]
+name = "wetris"
+path = "bin/wetris.rs"
