@@ -1,7 +1,8 @@
 [workspace]
 
 members = [
-    "wetris", "wungeons",
+    "wetris", 
+    "wungeons",
     "wurdle",
 ]
 resolver = "2"
