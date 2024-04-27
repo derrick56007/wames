@@ -2,7 +2,7 @@ use std::ops;
 
 use device_query::Keycode;
 
-#[derive(Eq, Hash, Clone, Debug)]
+#[derive(PartialEq,Eq, Hash, Clone, Debug)]
 pub struct Position {
     pub x: isize,
     pub y: isize,
@@ -44,11 +44,11 @@ impl ops::Add<&Position> for &Position {
     }
 }
 
-impl PartialEq for Position {
-    fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
+// impl PartialEq for Position {
+//     fn eq(&self, other: &Self) -> bool {
+//         self.x == other.x && self.y == other.y
+//     }
+// }
 
 #[derive(Clone)]
 pub struct Rect {
@@ -79,10 +79,7 @@ pub fn line_rect(x1: f64, y1: f64, x2: f64, y2: f64, rx: f64, ry: f64, rw: f64, 
 
     // if ANY of the above are true, the line
     // has hit the rectangle
-    if left || right || top || bottom {
-        return true;
-    }
-    return false;
+    left || right || top || bottom
 }
 
 // LINE/LINE
@@ -94,7 +91,7 @@ fn line_line(x1: f64, y1: f64, x2: f64, y2: f64, x3: f64, y3: f64, x4: f64, y4: 
         / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
 
     // if uA and uB are between 0-1, lines are colliding
-    if u_a >= 0.0 && u_a <= 1.0 && u_b >= 0.0 && u_b <= 1.0 {
+    if (0.0..=1.0).contains(&u_a) && (0.0..=1.0).contains(&u_b) {
         // optionally, draw a circle where the lines meet
         // let intersectionX = x1 + (uA * (x2 - x1));
         // let intersectionY = y1 + (uA * (y2 - y1));
@@ -128,6 +125,7 @@ pub fn contains_point(pos1: &Position, rect1: &Rect, pos2: &Position) -> bool {
 pub enum Component {
     Minion(Option<bool>),
     Wall,
+    SecretWall,
     Room,
     Door,
     Position(Option<Position>),
@@ -162,5 +160,6 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::Minion(_) => Component::Minion(None),
         Component::Drop(_) => Component::Drop(None),
         Component::Item(_) => Component::Item(None),
+        Component::SecretWall => Component::SecretWall,
     }
 }

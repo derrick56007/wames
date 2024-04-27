@@ -44,7 +44,7 @@ fn colorize_background_rbg(input: String, r: u8, g: u8, b: u8) -> String {
     format!("\x1b[48;2;{r};{g};{b}m{input}\x1b[0m")
 }
 
-pub fn render(state: &mut State, components: &Vec<Component>) {
+pub fn render(state: &mut State, components: &[Component]) {
     let entities = state.get_entities(components);
 
     let mut buffer: Vec<char> = " "
@@ -83,13 +83,25 @@ pub fn render(state: &mut State, components: &Vec<Component>) {
     for i in buffer {
         match i {
             ' ' => {
-                new_buffer = format!(
-                    "{new_buffer}{}",
-                    &colorize_background_rbg(i.to_string(), 128, 128, 128)
-                );
+                // new_buffer = format!(
+                //     "{new_buffer}{}",
+                //     &colorize_background_rbg(i.to_string(), 128, 128, 128)
+                // );
+                new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
             }
             '█' => {
                 new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
+                // new_buffer = format!(
+                //     "{new_buffer}{}",
+                //     &colorize_background_rbg(i.to_string(), 128, 128, 128)
+                // );
+            }
+            '~' => {
+                // new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
+                new_buffer = format!(
+                    "{new_buffer}{}",
+                    &colorize_background_rbg(' '.to_string(), 128, 128, 128)
+                );
             }
             '\n' => {
                 new_buffer = format!("{new_buffer}{}", &colorize(i.to_string(), "reset"));
@@ -143,12 +155,12 @@ pub fn bresenham(pos0: &Position, pos1: &Position) -> Vec<Position> {
 
         let e2 = 2 * err;
         if e2 > -dy {
-            err = err - dy;
-            x0 = x0 + sx;
+            err -= dy;
+            x0 += sx;
         }
         if e2 < dx {
-            err = err + dx;
-            y0 = y0 + sy;
+            err += dx;
+            y0 += sy;
         }
     }
 

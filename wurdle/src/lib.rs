@@ -71,11 +71,7 @@ pub fn play(
         .collect();
     let (mut word, mut word_vec, mut word_set) = get_word(
         if let Some(arg) = env::args().nth(1) {
-            if arg == "daily" {
-                true
-            } else {
-                false
-            }
+            arg == "daily"
         } else {
             false
         },
@@ -85,7 +81,7 @@ pub fn play(
     let mut db = Stats::read();
     let stdin = io::stdin();
     let mut input = String::new();
-    print!("\x1B[2J\x1B[1;1H\n");
+    println!("\x1B[2J\x1B[1;1H");
     let mut attempts: Vec<String> = vec![];
     let colors: HashMap<&str, &str> = HashMap::from_iter(COLORS);
     let mut game_over = false;
@@ -383,8 +379,7 @@ GUESS DISTRIBUTION
         //     input = String::from_utf8_lossy(&bytes[3..]).to_string();
         // }
 
-        if game_over == true {
-
+        if game_over {
             if input == "y" {
                 game_over = false;
                 (word, word_vec, word_set) = get_word(false, &all_words_vec);
@@ -396,7 +391,6 @@ GUESS DISTRIBUTION
             } else if input == "n" || input.trim().is_empty() {
                 return won;
             }
-            
         } else {
             if input.len() > 5 {
                 input = input[input.len() - 5..].to_string();
@@ -426,7 +420,7 @@ impl Stats {
         let lines = fs::read_to_string(DB_FILE);
 
         if let Ok(lines) = lines {
-            let lines = lines.split("\n").collect::<Vec<&str>>();
+            let lines = lines.split('\n').collect::<Vec<&str>>();
             Self {
                 played: lines[0].parse().unwrap(),
                 won: lines[1].parse().unwrap(),

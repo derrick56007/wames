@@ -68,11 +68,11 @@ fn main() {
     }
 }
 
-pub fn start_up(state: &mut State, _components: &Vec<Component>) {
+pub fn start_up(state: &mut State, _components: &[Component]) {
     state.events.push(Event::GameStart);
 }
 
-pub fn game_events(state: &mut State, _components: &Vec<Component>) {
+pub fn game_events(state: &mut State, _components: &[Component]) {
     loop {
         if let Some(event) = state.events.pop() {
             match event {
@@ -109,11 +109,14 @@ pub fn game_events(state: &mut State, _components: &Vec<Component>) {
     }
 }
 
-pub fn inputs(state: &mut State, components: &Vec<Component>) {
+pub fn inputs(state: &mut State, components: &[Component]) {
     let entities = state.component_map[components].clone();
     let minion_entities = state.component_map[&vec![Component::Minion(None)]].clone();
     let item_entities = state.component_map.get(&vec![Component::Item(None)]).unwrap_or(&HashSet::new()).clone();
     let door_entities = state.component_map[&vec![Component::Door]].clone();
+    let wall_entities = state.component_map[&vec![Component::Wall]].clone();
+
+    let secret_wall_entities = state.component_map[&vec![Component::SecretWall]].clone();
 
     // dbg!(&state.component_map);
 
@@ -132,6 +135,7 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
     // 'outer: loop {
         let keys: Vec<Keycode> = state.device_state.get_keys();
         let mut pressed_key: Option<Keycode> = None;
+        'outer:
         for key in keys.iter() {
             // if Some(key) == state.last_pressed_key.as_ref() {
             //     // ignore if same key is pressed twice
@@ -139,26 +143,29 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
             // }
             pressed_key = Some(*key);
             state.last_pressed_key = pressed_key;
-            for e in entities.iter().copied() {
-                let entity = &state.entities_map[&e];
+            for e in entities.iter() {
+                let entity = &state.entities_map[e];
                 let position: Position = get_component!(entity, Component::Position).unwrap();
 
                 match key {
+                    Keycode::R => {
+                        state.events.push(Event::GameStart);
+                    }
                     Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
-                        let new_position = position + &directions[key];
+                        let new_position = &position + &directions[key];
                         // check for collisions
                         let hits = other_positions
                             .iter()
                             .filter_map(|(i, p)| if p == &new_position { Some(*i) } else { None })
                             .collect::<Vec<usize>>();
 
-                        if hits.is_empty() {
-                            state
-                                .entities_map
-                                .get_mut(&e)
-                                .unwrap()
-                                .set_component(Component::Position(Some(new_position)));
-                        } else {
+                        // if hits.is_empty() {
+                        //     state
+                        //         .entities_map
+                        //         .get_mut(&e)
+                        //         .unwrap()
+                        //         .set_component(Component::Position(Some(new_position.clone())));
+                        // } else {
                             // minion_entities.retain(f)
                             // dbg!(&minion_entities, &hits);
                             // process::exit(0);
@@ -178,7 +185,7 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
 
                                     let tries = 6;
                                     let words_vec: Vec<String> = wurdle_words::WURDLE_WURDS
-                                        .split("\n")
+                                        .split('\n')
                                         .map(|s| s.to_uppercase())
                                         .collect();
 
@@ -214,13 +221,15 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
                                     } else {
                                         todo!();
                                     }
-                                    break 'check_hits;
+                                    break 'outer;
                                 } else if item_entities.contains(&hit) {
                                     let item =
                                         get_component!(&state.entities_map[&hit], Component::Item)
                                             .unwrap();
                                     state.items.push(item);
                                     state.remove_entity(hit);
+                                    break 'outer;
+
                                 } else if door_entities.contains(&hit) {
                                     // let item = get_component!(
                                     //     &state.entities_map[&hit],
@@ -236,9 +245,29 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
                                             state.remove_entity(*hit);
                                         }
                                     }
-                                }
+                                    break 'outer;
+
+                                } 
+                                else if wall_entities.contains(&hit) {
+                                    break 'outer;
+
+                                } 
+                                // else if secret_wall_entities.contains(&hit) {
+                                //     state
+                                //     .entities_map
+                                //     .get_mut(&e)
+                                //     .unwrap()
+                                //     .set_component(Component::Position(Some(new_position.clone())));
+                                // }
+                                // break;
                             }
-                        }
+
+                            state
+                                .entities_map
+                                .get_mut(e)
+                                .unwrap()
+                                .set_component(Component::Position(Some(new_position.clone())));
+                        // }
                     }
                     // Keycode::Space => {
 
@@ -257,7 +286,7 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
     // }
 }
 
-fn get_systems() -> Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)> {
+fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)> {
     vec![
         (start_up, vec![], true),
         (game_events, vec![], false),
@@ -275,4 +304,4 @@ fn get_systems() -> Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>
     ]
 }
 
-fn collisions(state: &mut State, components: &Vec<Component>) {}
+// fn collisions(state: &mut State, components: &Vec<Component>) {}

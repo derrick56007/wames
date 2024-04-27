@@ -459,10 +459,10 @@ fn main() {
                 match (&new_mino, new_pos) {
                     (None, None) => {}
                     (None, Some(pos)) => {
-                        if Tetrimino::hit(-1, y as isize, &pos, &shapes[&tetrimino]).is_some()
+                        if Tetrimino::hit(-1, y, &pos, &shapes[&tetrimino]).is_some()
                             || Tetrimino::hit(
                                 GRID_SIZE.0 as isize,
-                                y as isize,
+                                y ,
                                 &pos,
                                 &shapes[&tetrimino],
                             )
@@ -473,10 +473,10 @@ fn main() {
                         }
                     }
                     (Some(mino), None) => {
-                        if Tetrimino::hit(-1, y as isize, &position, &shapes[&mino]).is_some()
+                        if Tetrimino::hit(-1, y, &position, &shapes[&mino]).is_some()
                             || Tetrimino::hit(
                                 GRID_SIZE.0 as isize,
-                                y as isize,
+                                y,
                                 &position,
                                 &shapes[&mino],
                             )
@@ -487,10 +487,10 @@ fn main() {
                         }
                     }
                     (Some(mino), Some(pos)) => {
-                        if Tetrimino::hit(-1, y as isize, &pos, &shapes[&mino]).is_some()
+                        if Tetrimino::hit(-1, y, &pos, &shapes[&mino]).is_some()
                             || Tetrimino::hit(
                                 GRID_SIZE.0 as isize,
-                                y as isize,
+                                y ,
                                 &pos,
                                 &shapes[&mino],
                             )
@@ -507,7 +507,7 @@ fn main() {
                     (None, None) => {}
                     (None, Some(pos)) => {
                         if Tetrimino::hit(
-                            x as isize,
+                            x,
                             GRID_SIZE.1 as isize,
                             &pos,
                             &shapes[&tetrimino],
@@ -520,7 +520,7 @@ fn main() {
                     }
                     (Some(mino), None) => {
                         if Tetrimino::hit(
-                            x as isize,
+                            x ,
                             GRID_SIZE.1 as isize,
                             &position,
                             &shapes[&mino],
@@ -532,7 +532,7 @@ fn main() {
                         }
                     }
                     (Some(mino), Some(pos)) => {
-                        if Tetrimino::hit(x as isize, GRID_SIZE.1 as isize, &pos, &shapes[&mino])
+                        if Tetrimino::hit(x, GRID_SIZE.1 as isize, &pos, &shapes[&mino])
                             .is_some()
                         {
                             out_of_bounds = true;

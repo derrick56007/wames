@@ -6,8 +6,8 @@ use crate::{
 };
 
 pub fn new_entity(entity_id_counter: &mut usize, components: Vec<Component>) -> Entity {
-    let id = entity_id_counter.clone();
-    *entity_id_counter = *entity_id_counter + 1;
+    let id = *entity_id_counter;
+    *entity_id_counter += 1;
     Entity {
         id,
         components: components.clone(),
@@ -41,7 +41,7 @@ macro_rules! get_component {
 
 impl Entity {
     pub fn contains_component(&self, component: &Component) -> bool {
-        self.component_index.contains_key(&component)
+        self.component_index.contains_key(component)
     }
     pub fn set_component(&mut self, component: Component) {
         self.components[self.component_index[&get_default_component(&component)]] =
@@ -78,7 +78,7 @@ pub fn add_entity(entity: Entity, state: &mut State) {
         entity
             .components
             .iter()
-            .map(|c| get_default_component(c))
+            .map(get_default_component)
             .collect::<Vec<Component>>(),
     );
 

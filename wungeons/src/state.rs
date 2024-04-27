@@ -78,8 +78,8 @@ impl State {
         }
     }
 
-    pub fn get_entities(&self, components: &Vec<Component>) -> Box<&HashSet<usize>> {
-        Box::new(&self.component_map[components])
+    pub fn get_entities(&self, components: &[Component]) -> &HashSet<usize> {
+        &self.component_map[components]
     }
 
     pub fn get_unchosen_letters_if_possible(&mut self, n: usize) -> Vec<char> {

@@ -8,7 +8,8 @@ use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     components::{
-        contains_point, get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS, DIRECTIONS
+        contains_point, get_item_char, intersects, line_rect, Component, Item, Position, Rect,
+        DIAGONAL_DIRECTIONS, DIRECTIONS,
     },
     entity::{new_entity, Entity},
     render::bresenham,
@@ -30,7 +31,7 @@ fn generate_random_point_in_circle(rng: &mut ThreadRng, radius: isize) -> (isize
 }
 
 fn find_nearest_free_space(
-    rooms: &Vec<(Rect, Position, RoomType)>,
+    rooms: &[(Rect, Position, RoomType)],
     room_index: usize,
     // grid_size: &Rect,
     rng: &mut ThreadRng,
@@ -68,7 +69,7 @@ pub fn resolve_collisions(
 ) {
     for room_index in start..rooms.len() {
         'inner: loop {
-            if let Some(new_pos) = find_nearest_free_space(&rooms, room_index, rng) {
+            if let Some(new_pos) = find_nearest_free_space(rooms, room_index, rng) {
                 let (room_rect, _, _) = &rooms[room_index];
                 // dbg!(&room_index, &new_pos);
                 if new_pos.x >= 0
@@ -94,6 +95,7 @@ pub enum RoomType {
     Boss,
     Regular,
     Starting,
+    Secret,
 }
 
 pub fn create_rooms(
@@ -160,7 +162,7 @@ pub fn create_rooms(
     for i in 1..num_big_rooms + num_small_rooms {
         let (last_rect, last_pos, _) = &rooms[i - 1];
         let (rect, pos, _) = &rooms[i];
-        big_lines.push((last_rect.center(&last_pos), rect.center(&pos)))
+        big_lines.push((last_rect.center(last_pos), rect.center(pos)))
     }
 
     let mut final_rooms = vec![];
@@ -184,12 +186,20 @@ pub fn create_rooms(
         }
         final_rooms.push((rect, pos, is_big_room));
     }
-    let mut hallways = vec![];
-    for i in 1..num_big_rooms + num_small_rooms {
-        let (last_rect, last_pos, _) = &rooms[i - 1];
-        let (rect, pos, _) = &rooms[i];
-        let last_center = last_rect.center(&last_pos);
-        let center = rect.center(&pos);
+    let len = final_rooms.len();
+
+    final_rooms[len - 1].2 = &RoomType::Secret;
+
+
+    let mut hallways: Vec<(Position, Position)> = vec![];
+    for i in 1..final_rooms.len() {
+        let (last_rect, last_pos, last_room_type) = &final_rooms[i - 1];
+        let (rect, pos, room_type) = &final_rooms[i];
+        let last_center = last_rect.center(last_pos);
+        let center = rect.center(pos);
+
+        // if *last_room_type != &RoomType::Secret && *room_type != &RoomType::Secret {
+
         hallways.push((
             last_center.clone(),
             Position {
@@ -205,8 +215,11 @@ pub fn create_rooms(
                 y: center.y,
             },
         ));
+        // }
     }
     let mut wall_positions: HashSet<Position> = HashSet::new();
+    let mut secret_wall_positions: HashSet<Position> = HashSet::new();
+
     let mut fog_positions: HashSet<Position> = HashSet::new();
 
     for x in 0..grid_size.width {
@@ -215,20 +228,47 @@ pub fn create_rooms(
             fog_positions.insert(Position { x, y });
         }
     }
-
-    // remove hallways
-    for (pos1, pos2) in hallways {
-        for line_pos in bresenham(&pos1, &pos2) {
-            wall_positions.remove(&line_pos);
-        }
-    }
     let mut entities = vec![];
 
-    // let secret_rooms_count = 1;
+    let mut secret_hallways: Vec<(Position, Position)> = vec![];
+
+    // dig hallways
+    for (pos1, pos2) in hallways {
+        let (rect, pos, _) = final_rooms[len - 1];
+        if !line_rect(
+            pos1.x as f64,
+            pos1.y as f64,
+            pos2.x as f64,
+            pos2.y as f64,
+            pos.x as f64,
+            pos.y as f64,
+            rect.width as f64,
+            rect.height as f64,
+        ) {
+            for line_pos in bresenham(&pos1, &pos2) {
+                wall_positions.remove(&line_pos);
+                entities.push(create_floor(entity_id_counter, &line_pos));
+            }
+        }
+        secret_hallways.push((pos1, pos2));
+    }
+
+
+    // dig out rooms
     for (rect, pos, room_type) in final_rooms.iter() {
         for x in pos.x + 1..pos.x + rect.width {
             for y in pos.y + 1..pos.y + rect.height {
                 wall_positions.remove(&Position { x, y });
+                entities.push(create_floor(entity_id_counter, &Position { x, y }));
+            }
+        }
+    }
+
+    for (pos1, pos2) in secret_hallways {
+        for line_pos in bresenham(&pos1, &pos2) {
+            if wall_positions.contains(&line_pos) {
+                wall_positions.remove(&line_pos);
+                secret_wall_positions.insert(line_pos);
             }
         }
     }
@@ -269,6 +309,12 @@ pub fn create_rooms(
                     false
                 },
             ))
+        } else if room_type == RoomType::Secret {
+            entities.push(create_item(
+                entity_id_counter,
+                &rect.center(pos),
+                Item::Key,
+            ))
         }
     }
 
@@ -293,12 +339,52 @@ pub fn create_rooms(
     //     entities.push(create_wall(entity_id_counter, &wall_pos, '?'));
     // }
 
-    for wall_pos in wall_positions {
-        entities.push(create_wall(entity_id_counter, &wall_pos, '█'));
-    }
+
 
     for fog_pos in fog_positions {
         // entities.push(create_fog(entity_id_counter, &fog_pos));
+    }
+
+    let all_positions: HashSet<Position> = HashSet::from_iter(
+        wall_positions
+            // .union(&secret_wall_positions)
+            .iter()
+            .cloned()
+            // .map(|p| p.clone())
+            .collect::<Vec<Position>>(),
+    );
+    let mut empty_positions = HashSet::<Position>::new();
+    for x in 0..grid_size.width {
+        for y in 0..grid_size.height {
+            let pos = Position { x, y };
+            if !all_positions.contains(&pos) {
+                empty_positions.insert(pos);
+            }
+        }
+    }
+    let mut all_directions = DIRECTIONS.to_vec();
+    all_directions.extend(DIAGONAL_DIRECTIONS);
+    for pos in all_positions.iter() {
+        if all_directions.iter()
+            .map(|(_, d)| pos + d)
+            // .iter()
+            .any(|p| empty_positions.contains(&p))
+        {
+            continue;
+        }
+        // TODO
+        wall_positions.remove(pos);
+    }
+    for wall_pos in wall_positions.iter() {
+        entities.push(create_wall(entity_id_counter, wall_pos, '█'));
+    }
+
+    for secrete_wall_pos in secret_wall_positions.iter() {
+        entities.push(create_secret_wall(
+            entity_id_counter,
+            secrete_wall_pos,
+            '█',
+        ));
     }
 
     (
@@ -331,14 +417,26 @@ fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position, c: char) -> E
     )
 }
 
-fn create_fog(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
+fn create_secret_wall(entity_id_counter: &mut usize, wall_pos: &Position, c: char) -> Entity {
     new_entity(
         entity_id_counter,
         vec![
-            Component::Wall,
+            Component::SecretWall,
+            Component::Position(Some(wall_pos.clone())),
+            Component::Render(Some(c)),
+            Component::ZIndex(Some(0)),
+        ],
+    )
+}
+
+fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
+    new_entity(
+        entity_id_counter,
+        vec![
+            // Component::Wall,
             Component::Position(Some(wall_pos.clone())),
             Component::Render(Some('~')),
-            Component::ZIndex(Some(1)),
+            Component::ZIndex(Some(0)),
         ],
     )
 }
