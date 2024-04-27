@@ -1,4 +1,7 @@
-use std::{collections::HashSet, ops::Range};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Range,
+};
 
 use rand::{rngs::ThreadRng, Rng};
 
@@ -12,11 +15,11 @@ use crate::{
     state::State,
 };
 
-const BIG_ROOM_WIDTH_RANGE: Range<usize> = 11..15;
-const BIG_ROOM_HEIGHT_RANGE: Range<usize> = 7..11;
+const BIG_ROOM_WIDTH_RANGE: Range<usize> = 12..14;
+const BIG_ROOM_HEIGHT_RANGE: Range<usize> = 5..8;
 
 const ROOM_WIDTH_RANGE: Range<usize> = 6..9;
-const ROOM_HEIGHT_RANGE: Range<usize> = 4..6;
+const ROOM_HEIGHT_RANGE: Range<usize> = 5..6;
 
 fn generate_random_point_in_circle(rng: &mut ThreadRng, radius: isize) -> (isize, isize) {
     let random_angle = rng.gen::<f64>() * std::f64::consts::PI * 2.0;
@@ -113,7 +116,7 @@ pub fn create_rooms(
     for _ in 0..num_small_rooms {
         let rect = Rect {
             width: rng.gen_range(ROOM_WIDTH_RANGE) as isize,
-            height: rng.gen_range(ROOM_WIDTH_RANGE) as isize,
+            height: rng.gen_range(ROOM_HEIGHT_RANGE) as isize,
         };
         let pos = generate_rand_position(rng, grid_size, &rect);
         rooms.push((rect, pos, RoomType::Regular));
@@ -187,7 +190,6 @@ pub fn create_rooms(
             break;
         }
     }
-
 
     let mut hallways: Vec<(Position, Position)> = vec![];
     for i in 1..final_rooms.len() {
@@ -371,8 +373,85 @@ pub fn create_rooms(
         entities.push(create_wall(entity_id_counter, wall_pos, '█'));
     }
 
+    let mut secret_wall_group: HashMap<Position, usize> = HashMap::new();
     for secrete_wall_pos in secret_wall_positions.iter() {
-        entities.push(create_secret_wall(entity_id_counter, secrete_wall_pos, '█'));
+        if secret_wall_group.is_empty() {
+            secret_wall_group.insert(secrete_wall_pos.clone(), 0);
+            break;
+        }
+    }
+    for secrete_wall_pos in secret_wall_positions.iter() {
+        if secret_wall_group.contains_key(secrete_wall_pos) {
+            continue;
+        }
+        let mut group = None;
+
+        // 'outer:
+        for secrete_wall_pos in secret_wall_positions.iter() {
+            for secrete_wall_pos in secret_wall_positions.iter() {
+                for (_, d) in DIRECTIONS {
+                    if secret_wall_group.contains_key(&(secrete_wall_pos + &d)) {
+                        group = Some(secret_wall_group[&(secrete_wall_pos + &d)]);
+                        secret_wall_group.insert(secrete_wall_pos.clone(), group.unwrap());
+                        // secret_wall_group.insert(secrete_wall_pos + &d, group.unwrap());
+                        // break 'outer;
+                    }
+                }
+            }
+        }
+
+        // for (_, d) in DIRECTIONS {
+        //     if secret_wall_group.contains_key(&(secrete_wall_pos + &d)) {
+        //         group = secret_wall_group[&(secrete_wall_pos + &d)];
+        //         // break;
+        //     }
+        // }
+        // let mut found = false;
+        // 'inner:
+        // for _ in secret_wall_positions.iter() {
+
+        //     for secrete_wall_pos2 in secret_wall_positions.iter() {
+        //         if  secrete_wall_pos == secrete_wall_pos2{
+        //             continue;
+        //         }
+        //         // let mut group = HashSet::<usize>::from_iter(secret_wall_group.values().cloned().collect::<Vec<usize>>()).len();
+
+        //         for (_, d) in DIRECTIONS {
+        //             if &(secrete_wall_pos + &d)  == secrete_wall_pos2{
+        //                 // group = *secret_wall_group.get(&secrete_wall_pos2).unwrap_or(&group);
+        //                 secret_wall_group.insert(secrete_wall_pos2.clone(), group);
+        //                 // found = true;
+        //                 // continue 'inner;
+        //                 // continue 'outer;
+        //             }
+        //         }
+        //     }
+        //     // if !found {
+        //     //     break;
+        //     // }
+        // }
+        group = Some(
+            HashSet::<usize>::from_iter(
+                secret_wall_group.values().cloned().collect::<Vec<usize>>(),
+            )
+            .len(),
+        );
+        if secret_wall_group.contains_key(secrete_wall_pos) {
+            continue;
+        }
+        secret_wall_group.insert(secrete_wall_pos.clone(), group.unwrap());
+    }
+    for secrete_wall_pos in secret_wall_positions.iter() {
+        entities.push(create_secret_wall(
+            entity_id_counter,
+            secrete_wall_pos,
+            // secret_wall_group[secrete_wall_pos]
+            //     .to_string()
+            //     .chars()
+            //     .next()
+            //     .unwrap(),
+            secret_wall_group[secrete_wall_pos],
+        ));
     }
 
     (
@@ -405,19 +484,24 @@ fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position, c: char) -> E
     )
 }
 
-fn create_secret_wall(entity_id_counter: &mut usize, wall_pos: &Position, c: char) -> Entity {
+fn create_secret_wall(
+    entity_id_counter: &mut usize,
+    wall_pos: &Position,
+    // c: char,
+    group: usize,
+) -> Entity {
     new_entity(
         entity_id_counter,
         vec![
-            Component::SecretWall,
+            Component::SecretWall(Some(group)),
             Component::Position(Some(wall_pos.clone())),
-            Component::Render(Some(c)),
+            Component::Render(Some('█')),
             Component::ZIndex(Some(0)),
         ],
     )
 }
 
-fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
+pub fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
     new_entity(
         entity_id_counter,
         vec![

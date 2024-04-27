@@ -125,7 +125,7 @@ pub fn contains_point(pos1: &Position, rect1: &Rect, pos2: &Position) -> bool {
 pub enum Component {
     Minion(Option<bool>),
     Wall,
-    SecretWall,
+    SecretWall(Option<usize>),
     Room,
     Door,
     Position(Option<Position>),
@@ -159,6 +159,6 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::Minion(_) => Component::Minion(None),
         Component::Drop(_) => Component::Drop(None),
         Component::Item(_) => Component::Item(None),
-        Component::SecretWall => Component::SecretWall,
+        Component::SecretWall(_) => Component::SecretWall(None),
     }
 }

@@ -10,7 +10,7 @@ use device_query::{DeviceQuery, Keycode};
 use entity::new_entity;
 use event::Event;
 
-use rooms::create_item;
+use rooms::{create_floor, create_item};
 use wurdle::{play, wurdle_words};
 
 use crate::{
@@ -79,7 +79,6 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     for id in entity_ids {
                         state.remove_entity(id);
                     }
-                    
 
                     state.rooms.clear();
                     let (rooms, room_entities) = create_rooms(state);
@@ -119,7 +118,7 @@ pub fn inputs(state: &mut State, components: &[Component]) {
     let door_entities = state.component_map[&vec![Component::Door]].clone();
     let wall_entities = state.component_map[&vec![Component::Wall]].clone();
 
-    let _secret_wall_entities = state.component_map[&vec![Component::SecretWall]].clone();
+    let secret_wall_entities = state.component_map[&vec![Component::SecretWall(None)]].clone();
 
     // dbg!(&state.component_map);
 
@@ -247,14 +246,25 @@ pub fn inputs(state: &mut State, components: &[Component]) {
                             break 'outer;
                         } else if wall_entities.contains(&hit) {
                             break 'outer;
+                        } else if secret_wall_entities.contains(&hit) {
+                            let group =
+                                get_component!(&state.entities_map[&hit], Component::SecretWall)
+                                    .unwrap();
+                            for e in secret_wall_entities.iter() {
+                                let groupb =
+                                    get_component!(&state.entities_map[&e], Component::SecretWall)
+                                        .unwrap();
+
+                                let pos =
+                                    get_component!(&state.entities_map[&e], Component::Position)
+                                        .unwrap();
+
+                                if groupb == group {
+                                    state.remove_entity(*e);
+                                    add_entity(create_floor(&mut state.entity_id_counter, &pos), state);
+                                }
+                            }
                         }
-                        // else if secret_wall_entities.contains(&hit) {
-                        //     state
-                        //     .entities_map
-                        //     .get_mut(&e)
-                        //     .unwrap()
-                        //     .set_component(Component::Position(Some(new_position.clone())));
-                        // }
                         // break;
                     }
 
