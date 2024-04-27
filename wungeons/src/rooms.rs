@@ -16,10 +16,10 @@ use crate::{
 };
 
 const BIG_ROOM_WIDTH_RANGE: Range<usize> = 12..14;
-const BIG_ROOM_HEIGHT_RANGE: Range<usize> = 5..8;
+const BIG_ROOM_HEIGHT_RANGE: Range<usize> = 6..8;
 
-const ROOM_WIDTH_RANGE: Range<usize> = 6..9;
-const ROOM_HEIGHT_RANGE: Range<usize> = 5..6;
+const ROOM_WIDTH_RANGE: Range<usize> = 7..11;
+const ROOM_HEIGHT_RANGE: Range<usize> = 4..5;
 
 fn generate_random_point_in_circle(rng: &mut ThreadRng, radius: isize) -> (isize, isize) {
     let random_angle = rng.gen::<f64>() * std::f64::consts::PI * 2.0;
@@ -254,7 +254,7 @@ pub fn create_rooms(
     }
 
     // dig out rooms
-    for (rect, pos, _room_type) in final_rooms.iter() {
+    for (rect, pos, room_type) in final_rooms.iter() {
         for x in pos.x + 1..pos.x + rect.width {
             for y in pos.y + 1..pos.y + rect.height {
                 wall_positions.remove(&Position { x, y });
@@ -454,6 +454,20 @@ pub fn create_rooms(
         ));
     }
 
+    for (rect, pos, room_type) in final_rooms.iter() {
+        for x in pos.x + 1..pos.x + rect.width {
+            for y in pos.y + 1..pos.y + rect.height {
+                if **room_type == RoomType::Secret {
+                    entities.push(create_secret_wall(
+                        entity_id_counter,
+                        &Position { x, y },
+                        secret_wall_group.len(),
+                    ));
+                }
+            }
+        }
+    }
+
     (
         final_rooms
             .iter()
@@ -496,7 +510,7 @@ fn create_secret_wall(
             Component::SecretWall(Some(group)),
             Component::Position(Some(wall_pos.clone())),
             Component::Render(Some('█')),
-            Component::ZIndex(Some(0)),
+            Component::ZIndex(Some(2)),
         ],
     )
 }
