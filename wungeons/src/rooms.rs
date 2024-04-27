@@ -1,15 +1,11 @@
-use std::{
-    cmp::{max, min},
-    collections::HashSet,
-    ops::Range,
-};
+use std::{collections::HashSet, ops::Range};
 
 use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     components::{
-        contains_point, get_item_char, intersects, line_rect, Component, Item, Position, Rect,
-        DIAGONAL_DIRECTIONS, DIRECTIONS,
+        get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS,
+        DIRECTIONS,
     },
     entity::{new_entity, Entity},
     render::bresenham,
@@ -39,13 +35,11 @@ fn find_nearest_free_space(
     let (room, pos, _) = &rooms[room_index];
 
     for (i, (other_room, other_pos, _)) in rooms.iter().enumerate() {
-        if i != room_index {
-            if intersects(pos, room, other_pos, other_room) {
-                return Some(Position {
-                    x: pos.x + rng.gen_range(-1..2),
-                    y: pos.y + rng.gen_range(-1..2),
-                });
-            }
+        if i != room_index && intersects(pos, room, other_pos, other_room) {
+            return Some(Position {
+                x: pos.x + rng.gen_range(-4..5),
+                y: pos.y + rng.gen_range(-1..2),
+            });
         }
     }
 
@@ -168,8 +162,8 @@ pub fn create_rooms(
     let mut final_rooms = vec![];
 
     for (i, (rect, pos, is_big_room)) in rooms.iter().enumerate() {
-        if i >= num_big_rooms + num_small_rooms {
-            if !big_lines.iter().any(|(pos1, pos2)| {
+        if i >= num_big_rooms + num_small_rooms
+            && !big_lines.iter().any(|(pos1, pos2)| {
                 line_rect(
                     pos1.x as f64,
                     pos1.y as f64,
@@ -180,21 +174,25 @@ pub fn create_rooms(
                     rect.width as f64,
                     rect.height as f64,
                 )
-            }) {
-                continue;
-            }
+            })
+        {
+            continue;
         }
         final_rooms.push((rect, pos, is_big_room));
     }
     let len = final_rooms.len();
-
-    final_rooms[len - 1].2 = &RoomType::Secret;
+    for i in 0..len {
+        if final_rooms[i].2 == &RoomType::Regular {
+            final_rooms[len - 1].2 = &RoomType::Secret;
+            break;
+        }
+    }
 
 
     let mut hallways: Vec<(Position, Position)> = vec![];
     for i in 1..final_rooms.len() {
-        let (last_rect, last_pos, last_room_type) = &final_rooms[i - 1];
-        let (rect, pos, room_type) = &final_rooms[i];
+        let (last_rect, last_pos, _last_room_type) = &final_rooms[i - 1];
+        let (rect, pos, _room_type) = &final_rooms[i];
         let last_center = last_rect.center(last_pos);
         let center = rect.center(pos);
 
@@ -253,9 +251,8 @@ pub fn create_rooms(
         secret_hallways.push((pos1, pos2));
     }
 
-
     // dig out rooms
-    for (rect, pos, room_type) in final_rooms.iter() {
+    for (rect, pos, _room_type) in final_rooms.iter() {
         for x in pos.x + 1..pos.x + rect.width {
             for y in pos.y + 1..pos.y + rect.height {
                 wall_positions.remove(&Position { x, y });
@@ -310,11 +307,7 @@ pub fn create_rooms(
                 },
             ))
         } else if room_type == RoomType::Secret {
-            entities.push(create_item(
-                entity_id_counter,
-                &rect.center(pos),
-                Item::Key,
-            ))
+            entities.push(create_item(entity_id_counter, &rect.center(pos), Item::Key))
         }
     }
 
@@ -339,9 +332,7 @@ pub fn create_rooms(
     //     entities.push(create_wall(entity_id_counter, &wall_pos, '?'));
     // }
 
-
-
-    for fog_pos in fog_positions {
+    for _fog_pos in fog_positions {
         // entities.push(create_fog(entity_id_counter, &fog_pos));
     }
 
@@ -365,7 +356,8 @@ pub fn create_rooms(
     let mut all_directions = DIRECTIONS.to_vec();
     all_directions.extend(DIAGONAL_DIRECTIONS);
     for pos in all_positions.iter() {
-        if all_directions.iter()
+        if all_directions
+            .iter()
             .map(|(_, d)| pos + d)
             // .iter()
             .any(|p| empty_positions.contains(&p))
@@ -380,11 +372,7 @@ pub fn create_rooms(
     }
 
     for secrete_wall_pos in secret_wall_positions.iter() {
-        entities.push(create_secret_wall(
-            entity_id_counter,
-            secrete_wall_pos,
-            '█',
-        ));
+        entities.push(create_secret_wall(entity_id_counter, secrete_wall_pos, '█'));
     }
 
     (
@@ -435,7 +423,7 @@ fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
         vec![
             // Component::Wall,
             Component::Position(Some(wall_pos.clone())),
-            Component::Render(Some('~')),
+            Component::Render(Some('.')),
             Component::ZIndex(Some(0)),
         ],
     )

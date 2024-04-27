@@ -51,7 +51,6 @@ impl Entity {
         if !self.component_index.contains_key(&component) {
             None
         } else {
-
             Some(self.components[self.component_index[&component]].clone())
         }
         // for c in &self.components {

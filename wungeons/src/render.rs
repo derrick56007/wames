@@ -1,12 +1,10 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     io::{stdout, Write},
-    time::{Duration, SystemTime},
 };
 
 use crate::{
     components::{Component, Position},
-    entity::Entity,
     get_component,
     state::State,
 };
@@ -76,6 +74,7 @@ pub fn render(state: &mut State, components: &[Component]) {
     for i in (0..state.grid_size.height).rev() {
         buffer.insert((i * state.grid_size.width) as usize, '\n')
     }
+    print!("{}[2J", 27 as char);
 
     print!("\x1B[2J\x1B[1;1H");
     // let chars: HashSet<char> = HashSet::from_iter(buffer.clone());
@@ -96,7 +95,7 @@ pub fn render(state: &mut State, components: &[Component]) {
                 //     &colorize_background_rbg(i.to_string(), 128, 128, 128)
                 // );
             }
-            '~' => {
+            '.' => {
                 // new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
                 new_buffer = format!(
                     "{new_buffer}{}",
@@ -105,7 +104,6 @@ pub fn render(state: &mut State, components: &[Component]) {
             }
             '\n' => {
                 new_buffer = format!("{new_buffer}{}", &colorize(i.to_string(), "reset"));
-
             }
             _ => {
                 new_buffer = format!(
@@ -125,9 +123,18 @@ pub fn render(state: &mut State, components: &[Component]) {
     available_letters.sort();
     print!(
         "\n+[ {} ] {:?}\n-[ {} ]\n", //{:?}",
-        available_letters.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(", "),
+        available_letters
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<String>>()
+            .join(", "),
         state.items,
-        state.letters_remaining.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(", "),
+        state
+            .letters_remaining
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<String>>()
+            .join(", "),
         // SystemTime::now(),
     );
     stdout().flush().unwrap();

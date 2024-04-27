@@ -2,7 +2,7 @@ use std::ops;
 
 use device_query::Keycode;
 
-#[derive(PartialEq,Eq, Hash, Clone, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub struct Position {
     pub x: isize,
     pub y: isize,
@@ -138,7 +138,7 @@ pub enum Component {
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug, PartialOrd, Ord)]
 pub enum Item {
-    Key
+    Key,
 }
 
 pub fn get_item_char(item: &Item) -> char {
@@ -146,7 +146,6 @@ pub fn get_item_char(item: &Item) -> char {
         Item::Key => 'k',
     }
 }
-
 
 pub fn get_default_component(c: &Component) -> Component {
     match c {

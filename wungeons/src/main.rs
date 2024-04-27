@@ -1,24 +1,21 @@
 use std::{
     collections::{HashMap, HashSet},
-    io::{self, stdin, stdout, BufRead, Read, Stdin, Write},
-    ops::Range,
-    os::fd::AsFd,
-    process,
-    thread::{self, sleep},
+    io::BufRead,
+    thread::sleep,
     time::{Duration, SystemTime},
 };
 
 use components::{Item, Position, DIRECTIONS};
-use device_query::{DeviceQuery, DeviceState, Keycode};
+use device_query::{DeviceQuery, Keycode};
 use entity::new_entity;
 use event::Event;
-use rand::{rngs::ThreadRng, Rng};
+
 use rooms::create_item;
 use wurdle::{play, wurdle_words};
 
 use crate::{
     components::{Component, Rect},
-    entity::{add_entity, Entity},
+    entity::add_entity,
     rooms::create_rooms,
     state::State,
 };
@@ -34,7 +31,7 @@ use crate::render::render;
 
 fn main() {
     const GRID_SIZE: Rect = Rect {
-        width: 100,
+        width: 70,
         height: 34,
     };
 
@@ -82,6 +79,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     for id in entity_ids {
                         state.remove_entity(id);
                     }
+                    
 
                     state.rooms.clear();
                     let (rooms, room_entities) = create_rooms(state);
@@ -99,6 +97,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                             Component::Player,
                         ],
                     );
+                    state.refresh();
 
                     add_entity(entity, state);
                 }
@@ -112,11 +111,15 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
 pub fn inputs(state: &mut State, components: &[Component]) {
     let entities = state.component_map[components].clone();
     let minion_entities = state.component_map[&vec![Component::Minion(None)]].clone();
-    let item_entities = state.component_map.get(&vec![Component::Item(None)]).unwrap_or(&HashSet::new()).clone();
+    let item_entities = state
+        .component_map
+        .get(&vec![Component::Item(None)])
+        .unwrap_or(&HashSet::new())
+        .clone();
     let door_entities = state.component_map[&vec![Component::Door]].clone();
     let wall_entities = state.component_map[&vec![Component::Wall]].clone();
 
-    let secret_wall_entities = state.component_map[&vec![Component::SecretWall]].clone();
+    let _secret_wall_entities = state.component_map[&vec![Component::SecretWall]].clone();
 
     // dbg!(&state.component_map);
 
@@ -133,156 +136,149 @@ pub fn inputs(state: &mut State, components: &[Component]) {
         .collect::<Vec<(usize, Position)>>();
 
     // 'outer: loop {
-        let keys: Vec<Keycode> = state.device_state.get_keys();
-        let mut pressed_key: Option<Keycode> = None;
-        'outer:
-        for key in keys.iter() {
-            // if Some(key) == state.last_pressed_key.as_ref() {
-            //     // ignore if same key is pressed twice
-            //     continue 'outer;
-            // }
-            pressed_key = Some(*key);
-            state.last_pressed_key = pressed_key;
-            for e in entities.iter() {
-                let entity = &state.entities_map[e];
-                let position: Position = get_component!(entity, Component::Position).unwrap();
-
-                match key {
-                    Keycode::R => {
-                        state.events.push(Event::GameStart);
-                    }
-                    Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
-                        let new_position = &position + &directions[key];
-                        // check for collisions
-                        let hits = other_positions
-                            .iter()
-                            .filter_map(|(i, p)| if p == &new_position { Some(*i) } else { None })
-                            .collect::<Vec<usize>>();
-
-                        // if hits.is_empty() {
-                        //     state
-                        //         .entities_map
-                        //         .get_mut(&e)
-                        //         .unwrap()
-                        //         .set_component(Component::Position(Some(new_position.clone())));
-                        // } else {
-                            // minion_entities.retain(f)
-                            // dbg!(&minion_entities, &hits);
-                            // process::exit(0);
-                            'check_hits: for hit in hits {
-                                if minion_entities.contains(&hit) {
-                                    let render: char = get_component!(
-                                        &state.entities_map[&hit],
-                                        Component::Render
-                                    )
-                                    .unwrap();
-                                    let is_boss = get_component!(
-                                        &state.entities_map[&hit],
-                                        Component::Minion
-                                    )
-                                    .unwrap();
-                                    state.add_letter(render);
-
-                                    let tries = 6;
-                                    let words_vec: Vec<String> = wurdle_words::WURDLE_WURDS
-                                        .split('\n')
-                                        .map(|s| s.to_uppercase())
-                                        .collect();
-
-                                    sleep(Duration::from_millis(100));
-
-                                    let won =
-                                        play(tries, state.available_letters.clone(), words_vec, Some(render), false);
-                                    if won {
-                                        // dbg!(state.entities_map[&hit]
-                                        //     .contains_component(&Component::Drop(None)));
-                                        // process::exit(0);
-                                        if dbg!(state.entities_map[&hit]
-                                            .contains_component(&Component::Drop(None)))
-                                        {
-                                            let drop = get_component!(
-                                                &state.entities_map[&hit],
-                                                Component::Drop
-                                            )
-                                            .unwrap();
-                                            add_entity(
-                                                create_item(
-                                                    &mut state.entity_id_counter,
-                                                    &new_position,
-                                                    drop,
-                                                ),
-                                                state,
-                                            );
-                                        }
-                                        if is_boss {
-                                            state.events.push(Event::GameStart);
-                                        }
-                                        state.remove_entity(hit);
-                                    } else {
-                                        todo!();
-                                    }
-                                    break 'outer;
-                                } else if item_entities.contains(&hit) {
-                                    let item =
-                                        get_component!(&state.entities_map[&hit], Component::Item)
-                                            .unwrap();
-                                    state.items.push(item);
-                                    state.remove_entity(hit);
-                                    break 'outer;
-
-                                } else if door_entities.contains(&hit) {
-                                    // let item = get_component!(
-                                    //     &state.entities_map[&hit],
-                                    //     Component::Item
-                                    // )
-                                    // .unwrap();
-                                    if state.items.contains(&Item::Key) {
-                                        state
-                                            .items
-                                            .remove(state.items.binary_search(&Item::Key).unwrap());
-
-                                        for hit in &door_entities {
-                                            state.remove_entity(*hit);
-                                        }
-                                    }
-                                    break 'outer;
-
-                                } 
-                                else if wall_entities.contains(&hit) {
-                                    break 'outer;
-
-                                } 
-                                // else if secret_wall_entities.contains(&hit) {
-                                //     state
-                                //     .entities_map
-                                //     .get_mut(&e)
-                                //     .unwrap()
-                                //     .set_component(Component::Position(Some(new_position.clone())));
-                                // }
-                                // break;
-                            }
-
-                            state
-                                .entities_map
-                                .get_mut(e)
-                                .unwrap()
-                                .set_component(Component::Position(Some(new_position.clone())));
-                        // }
-                    }
-                    // Keycode::Space => {
-
-                    // }
-                    _ => {}
-                }
-            }
-            // break 'outer;
-        }
-        // if pressed_key.is_none() {
-        //     state.last_pressed_key = None;
+    let keys: Vec<Keycode> = state.device_state.get_keys();
+    let mut pressed_key: Option<Keycode> = None;
+    'outer: for key in keys.iter() {
+        // if Some(key) == state.last_pressed_key.as_ref() {
+        //     // ignore if same key is pressed twice
         //     continue 'outer;
         // }
-        // process::exit(code)
-        sleep(Duration::from_millis(50));
+        pressed_key = Some(*key);
+        state.last_pressed_key = pressed_key;
+        for e in entities.iter() {
+            let entity = &state.entities_map[e];
+            let position: Position = get_component!(entity, Component::Position).unwrap();
+
+            match key {
+                Keycode::R => {
+                    state.events.push(Event::GameStart);
+                }
+                Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
+                    let new_position = &position + &directions[key];
+                    // check for collisions
+                    let hits = other_positions
+                        .iter()
+                        .filter_map(|(i, p)| if p == &new_position { Some(*i) } else { None })
+                        .collect::<Vec<usize>>();
+
+                    // if hits.is_empty() {
+                    //     state
+                    //         .entities_map
+                    //         .get_mut(&e)
+                    //         .unwrap()
+                    //         .set_component(Component::Position(Some(new_position.clone())));
+                    // } else {
+                    // minion_entities.retain(f)
+                    // dbg!(&minion_entities, &hits);
+                    // process::exit(0);
+                    'check_hits: for hit in hits {
+                        if minion_entities.contains(&hit) {
+                            let render: char =
+                                get_component!(&state.entities_map[&hit], Component::Render)
+                                    .unwrap();
+                            let is_boss =
+                                get_component!(&state.entities_map[&hit], Component::Minion)
+                                    .unwrap();
+                            state.add_letter(render);
+
+                            let tries = 6;
+                            let words_vec: Vec<String> = wurdle_words::WURDLE_WURDS
+                                .split('\n')
+                                .map(|s| s.to_uppercase())
+                                .collect();
+
+                            sleep(Duration::from_millis(100));
+
+                            let won = play(
+                                tries,
+                                state.available_letters.clone(),
+                                words_vec,
+                                Some(render),
+                                false,
+                            );
+                            if won {
+                                // dbg!(state.entities_map[&hit]
+                                //     .contains_component(&Component::Drop(None)));
+                                // process::exit(0);
+                                if dbg!(state.entities_map[&hit]
+                                    .contains_component(&Component::Drop(None)))
+                                {
+                                    let drop =
+                                        get_component!(&state.entities_map[&hit], Component::Drop)
+                                            .unwrap();
+                                    add_entity(
+                                        create_item(
+                                            &mut state.entity_id_counter,
+                                            &new_position,
+                                            drop,
+                                        ),
+                                        state,
+                                    );
+                                }
+                                if is_boss {
+                                    state.events.push(Event::GameStart);
+                                }
+                                state.remove_entity(hit);
+                            } else {
+                                todo!();
+                            }
+                            break 'outer;
+                        } else if item_entities.contains(&hit) {
+                            let item =
+                                get_component!(&state.entities_map[&hit], Component::Item).unwrap();
+                            state.items.push(item);
+                            state.remove_entity(hit);
+                            break 'outer;
+                        } else if door_entities.contains(&hit) {
+                            // let item = get_component!(
+                            //     &state.entities_map[&hit],
+                            //     Component::Item
+                            // )
+                            // .unwrap();
+                            if state.items.contains(&Item::Key) {
+                                state
+                                    .items
+                                    .remove(state.items.binary_search(&Item::Key).unwrap());
+
+                                for hit in &door_entities {
+                                    state.remove_entity(*hit);
+                                }
+                            }
+                            break 'outer;
+                        } else if wall_entities.contains(&hit) {
+                            break 'outer;
+                        }
+                        // else if secret_wall_entities.contains(&hit) {
+                        //     state
+                        //     .entities_map
+                        //     .get_mut(&e)
+                        //     .unwrap()
+                        //     .set_component(Component::Position(Some(new_position.clone())));
+                        // }
+                        // break;
+                    }
+
+                    state
+                        .entities_map
+                        .get_mut(e)
+                        .unwrap()
+                        .set_component(Component::Position(Some(new_position.clone())));
+                    // }
+                }
+                // Keycode::Space => {
+
+                // }
+                _ => {}
+            }
+        }
+        // break 'outer;
+    }
+    // if pressed_key.is_none() {
+    //     state.last_pressed_key = None;
+    //     continue 'outer;
+    // }
+    // process::exit(code)
+    sleep(Duration::from_millis(50));
     // }
 }
 

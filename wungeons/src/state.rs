@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, HashSet},
-    iter,
     time::Duration,
 };
 
@@ -11,7 +10,6 @@ use crate::{
     components::{Component, Item, Position, Rect},
     entity::Entity,
     event::Event,
-    get_systems,
     rooms::RoomType,
 };
 
@@ -37,31 +35,14 @@ pub struct State {
 
 impl State {
     pub fn new(grid_size: Rect, system_components: Vec<Vec<Component>>) -> Self {
-        let mut available_letters: HashSet<char> =
-            HashSet::from_iter("aeuio".to_uppercase().chars());
-        let mut letters_remaining = "abcdefghijklmnopqrstuvwxys".to_uppercase().to_string();
-        let starting_letters_count = 10;
-        let mut rng = rand::thread_rng();
-        for c in &available_letters {
-            letters_remaining = letters_remaining.replace(*c, "");
-        }
-        let mut letters_remaining = letters_remaining.chars().collect::<Vec<char>>();
+        // let mut rng = ;
 
-        while available_letters.len() < starting_letters_count {
-            let new_letter = letters_remaining[rng.gen::<usize>() % letters_remaining.len()];
-            available_letters.insert(new_letter);
-            letters_remaining = String::from_iter(letters_remaining)
-                .replace(new_letter, "")
-                .chars()
-                .collect::<Vec<char>>()
-        }
-
-        Self {
-            grid_size: grid_size,
+        let mut n = Self {
+            grid_size,
             events: vec![],
             last_pressed_key: None,
             device_state: DeviceState::new(),
-            rng,
+            rng: rand::thread_rng(),
             entity_id_counter: 0,
 
             entities_map: HashMap::new(),
@@ -69,13 +50,37 @@ impl State {
             system_components,
             rooms: Vec::new(),
             change_events: Vec::new(),
-            letters_remaining,
+            letters_remaining: Vec::new(),
             // system_components: HashSet::new(),
             // systems: get_systems(),
-            available_letters,
+            available_letters: HashSet::new(),
             full_loop_duration: None,
             items: Vec::new(),
+        };
+        n.refresh();
+        n
+    }
+
+    pub fn refresh(&mut self) {
+        let mut available_letters: HashSet<char> =
+            HashSet::from_iter("aeuio".to_uppercase().chars());
+        let mut letters_remaining = "abcdefghijklmnopqrstuvwxys".to_uppercase().to_string();
+        let starting_letters_count = 10;
+        for c in &available_letters {
+            letters_remaining = letters_remaining.replace(*c, "");
         }
+        let mut letters_remaining = letters_remaining.chars().collect::<Vec<char>>();
+
+        while available_letters.len() < starting_letters_count {
+            let new_letter = letters_remaining[self.rng.gen::<usize>() % letters_remaining.len()];
+            available_letters.insert(new_letter);
+            letters_remaining = String::from_iter(letters_remaining)
+                .replace(new_letter, "")
+                .chars()
+                .collect::<Vec<char>>()
+        }
+        self.available_letters = available_letters;
+        self.letters_remaining = letters_remaining;
     }
 
     pub fn get_entities(&self, components: &[Component]) -> &HashSet<usize> {
