@@ -1,61 +1,119 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    io::{stdout, Write},
+    time::Duration,
+};
 
 use crate::{
     components::{Component, Position},
     entity::Entity,
+    get_component,
     state::State,
 };
 
-pub fn render(
-    entities: &HashSet<usize>,
-    state: &mut State,
-    entities_map: &mut HashMap<usize, Box<Entity>>,
-) {
-    let mut buffer: Vec<char> = "."
+const COLORS: [(&str, &str); 17] = [
+    ("foreground black", "\x1b[30m"),
+    ("foreground red", "\x1b[31m"),
+    ("foreground green", "\x1b[32m"),
+    ("foreground yellow", "\x1b[33m"),
+    ("foreground blue", "\x1b[34m"),
+    ("foreground magenta", "\x1b[35m"),
+    ("foreground cyan", "\x1b[36m"),
+    ("foreground white", "\x1b[37m"),
+    ("background black", "\x1b[40m"),
+    ("background red", "\x1b[41m"),
+    ("background green", "\x1b[42m"),
+    ("background yellow", "\x1b[43m"),
+    ("background blue", "\x1b[44m"),
+    ("background magenta", "\x1b[45m"),
+    ("background cyan", "\x1b[46m"),
+    ("background white", "\x1b[47m"),
+    ("reset", "\x1b[0m"),
+];
+
+fn colorize(input: String, color: &str) -> String {
+    let colors: HashMap<&str, &str> = HashMap::from_iter(COLORS);
+
+    format!("{}{input}\x1b[0m", colors[color])
+}
+
+fn colorize_foreground_rbg(input: String, r: u8, g: u8, b: u8) -> String {
+    format!("\x1b[38;2;{r};{g};{b}m{input}\x1b[0m")
+}
+fn colorize_background_rbg(input: String, r: u8, g: u8, b: u8) -> String {
+    format!("\x1b[48;2;{r};{g};{b}m{input}\x1b[0m")
+}
+
+pub fn render(state: &mut State, components: &Vec<Component>) {
+    let entities = state.get_entities(components);
+
+    let mut buffer: Vec<char> = " "
         .repeat(state.grid_size.area() as usize)
         .chars()
         .collect();
-    // println!("{:?}", entities_map);
-    // println!("{:?}", entities);
-    for e in entities {
-        let entity = &entities_map[e];
 
-        let position = entity
-            .components
-            .iter()
-            .filter_map(|c| match c {
-                Component::Position(a) => Some(a),
-                _ => None,
-            })
-            .next()
-            .unwrap()
-            .clone()
-            .unwrap();
+    let mut entities = entities
+        .iter()
+        .map(|e| {
+            (
+                *e,
+                get_component!(state.entities_map[e], Component::ZIndex).unwrap(),
+            )
+        })
+        .collect::<Vec<(usize, usize)>>();
+    entities.sort_by(|a, b| a.1.cmp(&b.1));
+
+    for (e, _) in entities.iter() {
+        let entity = &state.entities_map[e];
+
+        let position = get_component!(entity, Component::Position).unwrap();
         let idx = state.grid_size.width * position.y + position.x;
-        // println!("{idx} {:?}", position);
 
-        let render_char = entity
-            .components
-            .iter()
-            .filter_map(|c| match c {
-                Component::Render(a) => Some(a),
-                _ => None,
-            })
-            .next()
-            .unwrap()
-            .clone()
-            .unwrap();
-        // dbg!(&position);
-        // assert!(idx >= 0 && idx < buffer.len() as isize);
+        let render_char = get_component!(entity, Component::Render).unwrap();
 
         buffer[idx as usize] = render_char;
     }
     for i in (0..state.grid_size.height).rev() {
         buffer.insert((i * state.grid_size.width) as usize, '\n')
     }
-    print!("\x1B[2J\x1B[1;1H");
 
-    print!("{}", &String::from_iter(buffer));
+    print!("\x1B[2J\x1B[1;1H");
+    // let chars: HashSet<char> = HashSet::from_iter(buffer.clone());
+    let mut new_buffer = "".to_string();
+    for i in buffer {
+        match i {
+            ' ' => {
+                new_buffer = format!(
+                    "{new_buffer}{}",
+                    &colorize_background_rbg(i.to_string(), 128, 128, 128)
+                );
+            }
+            '█' => {
+                new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
+            }
+            _ => {
+                new_buffer = format!(
+                    "{new_buffer}{}",
+                    &colorize_background_rbg(i.to_string(), 128, 128, 128)
+                );
+            }
+        }
+    }
+
+    print!("{}", &new_buffer);
+    let mut available_letters = state
+        .available_letters
+        .iter()
+        .copied()
+        .collect::<Vec<char>>();
+    available_letters.sort();
+    print!(
+        "\n{:?} {:?}{:?}",
+        available_letters,
+        state.items,
+        state.full_loop_duration.unwrap_or(Duration::ZERO)
+    );
+    stdout().flush().unwrap();
 }
 
 pub fn bresenham(pos0: &Position, pos1: &Position) -> Vec<Position> {

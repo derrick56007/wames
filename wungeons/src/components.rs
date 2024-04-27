@@ -1,7 +1,29 @@
+use std::ops;
+
+use device_query::Keycode;
+
 #[derive(Eq, Hash, Clone, Debug)]
 pub struct Position {
     pub x: isize,
     pub y: isize,
+}
+
+pub const DIRECTIONS: [(Keycode, Position); 4] = [
+    (Keycode::Up, Position { x: 0, y: -1 }),
+    (Keycode::Down, Position { x: 0, y: 1 }),
+    (Keycode::Left, Position { x: -1, y: 0 }),
+    (Keycode::Right, Position { x: 1, y: 0 }),
+];
+
+impl ops::Add<&Position> for Position {
+    type Output = Position;
+
+    fn add(self, rhs: &Position) -> Position {
+        Position {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
 }
 
 impl PartialEq for Position {
@@ -10,6 +32,7 @@ impl PartialEq for Position {
     }
 }
 
+#[derive(Clone)]
 pub struct Rect {
     pub width: isize,
     pub height: isize,
@@ -77,21 +100,49 @@ pub fn intersects(pos1: &Position, rect1: &Rect, pos2: &Position, rect2: &Rect) 
 }
 
 pub fn contains_point(pos1: &Position, rect1: &Rect, pos2: &Position) -> bool {
-    pos2.x >= pos1.x && pos2.x <= pos1.x + rect1.width && 
-    pos2.y >= pos1.y && pos2.y <= pos1.y + rect1.height
+    pos2.x >= pos1.x
+        && pos2.x <= pos1.x + rect1.width
+        && pos2.y >= pos1.y
+        && pos2.y <= pos1.y + rect1.height
 }
 
 #[derive(Eq, PartialEq, Hash, Clone, Debug)]
 pub enum Component {
+    Minion(Option<bool>),
     Wall,
+    Room,
+    Door,
     Position(Option<Position>),
     Render(Option<char>),
+    ZIndex(Option<usize>),
+    Player,
+    Drop(Option<Item>),
+    Item(Option<Item>),
 }
+
+#[derive(PartialEq, Eq, Hash, Clone, Debug, PartialOrd, Ord)]
+pub enum Item {
+    Key
+}
+
+pub fn get_item_char(item: &Item) -> char {
+    match item {
+        Item::Key => 'k',
+    }
+}
+
 
 pub fn get_default_component(c: &Component) -> Component {
     match c {
         Component::Position(_) => Component::Position(None),
         Component::Wall => Component::Wall,
         Component::Render(_) => Component::Render(None),
+        Component::ZIndex(_) => Component::ZIndex(None),
+        Component::Room => Component::Room,
+        Component::Door => Component::Door,
+        Component::Player => Component::Player,
+        Component::Minion(_) => Component::Minion(None),
+        Component::Drop(_) => Component::Drop(None),
+        Component::Item(_) => Component::Item(None),
     }
 }

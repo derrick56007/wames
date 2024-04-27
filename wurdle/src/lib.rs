@@ -37,8 +37,36 @@ fn get_word(daily: bool, words_vec: &[String]) -> (String, Vec<char>, HashSet<ch
     (word, word_vec, word_set)
 }
 
-pub fn play(tries: usize, available_letters: HashSet<char>, words_vec: Vec<String>) -> bool {
-    let words_set: HashSet<String> = HashSet::from_iter(words_vec.clone());
+pub fn play(
+    tries: usize,
+    available_letters: HashSet<char>,
+    all_words_vec: Vec<String>,
+    minion: Option<char>,
+) -> bool {
+    let words_set: HashSet<String> = HashSet::from_iter(all_words_vec.clone());
+
+    // let args = env::args().collect::<Vec<String>>();
+    // let minion: Option<char> = None;
+
+    let choice_words: Vec<String> = all_words_vec
+        .clone()
+        .iter()
+        .filter(|word| {
+            if !available_letters.is_empty() {
+                word.chars().all(|c| available_letters.contains(&c))
+            } else {
+                true
+            }
+        })
+        .map(|s| s.to_string())
+        .filter(|s| {
+            if let Some(minion) = minion {
+                s.contains(minion)
+            } else {
+                true
+            }
+        })
+        .collect();
     let (mut word, mut word_vec, mut word_set) = get_word(
         if let Some(arg) = env::args().nth(1) {
             if arg == "daily" {
@@ -49,9 +77,9 @@ pub fn play(tries: usize, available_letters: HashSet<char>, words_vec: Vec<Strin
         } else {
             false
         },
-        &words_vec,
+        &choice_words,
     );
-    let args = env::args().collect::<Vec<String>>();
+
     let mut db = Stats::read();
     let stdin = io::stdin();
     let mut input = String::new();
@@ -70,9 +98,12 @@ pub fn play(tries: usize, available_letters: HashSet<char>, words_vec: Vec<Strin
 
     loop {
         print!("\x1B[2J\x1B[1;1H");
-        println!("          wurdle");
-        println!("==========================\n");
-        println!("{}", &word);
+        print!("          wurdle");
+        if let Some(minion) = minion {
+            print!(" ({})", minion);
+        }
+        println!("\n==========================\n");
+        // println!("{}", &word);
 
         if !attempts.is_empty() && !words_set.contains(attempts.last().unwrap()) {
             attempts.pop();
@@ -338,16 +369,17 @@ GUESS DISTRIBUTION
         input.clear();
         stdin.read_line(&mut input).unwrap();
         input.pop();
+        // input.retain(|c| c.is_alphabetic());
 
-        let bytes = input.as_bytes();
-        if bytes.len() > 3 && &bytes[0..2] == &[27, 91] {
-            input = String::from_utf8_lossy(&bytes[3..]).to_string();
-        }
+        // let bytes = input.as_bytes();
+        // if bytes.len() > 3 && &bytes[0..2] == &[27, 91] {
+        //     input = String::from_utf8_lossy(&bytes[3..]).to_string();
+        // }
 
         if game_over == true {
             if input == "y" {
                 game_over = false;
-                (word, word_vec, word_set) = get_word(false, &words_vec);
+                (word, word_vec, word_set) = get_word(false, &all_words_vec);
                 attempts.clear();
                 used_letters.clear();
                 misplaced_letters.clear();
@@ -357,11 +389,14 @@ GUESS DISTRIBUTION
                 return won;
             }
         } else {
+            if input.len() > 5 {
+                input = input[input.len() - 5..].to_string();
+            }
+
             attempts.push(input.to_uppercase());
         }
     }
 }
-
 struct Stats {
     pub played: usize,
     pub won: usize,
