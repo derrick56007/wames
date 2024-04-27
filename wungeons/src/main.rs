@@ -35,7 +35,7 @@ use crate::render::render;
 fn main() {
     const GRID_SIZE: Rect = Rect {
         width: 100,
-        height: 50,
+        height: 34,
     };
 
     let mut systems = get_systems();
@@ -129,7 +129,7 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
         })
         .collect::<Vec<(usize, Position)>>();
 
-    'outer: loop {
+    // 'outer: loop {
         let keys: Vec<Keycode> = state.device_state.get_keys();
         let mut pressed_key: Option<Keycode> = None;
         for key in keys.iter() {
@@ -246,14 +246,15 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
                     _ => {}
                 }
             }
-            return;
+            // break 'outer;
         }
         // if pressed_key.is_none() {
         //     state.last_pressed_key = None;
         //     continue 'outer;
         // }
-        sleep(Duration::from_millis(120));
-    }
+        // process::exit(code)
+        sleep(Duration::from_millis(50));
+    // }
 }
 
 fn get_systems() -> Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)> {
@@ -270,7 +271,7 @@ fn get_systems() -> Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>
             false,
         ),
         (inputs, vec![Component::Player], false),
-        (collisions, vec![], false),
+        // (collisions, vec![], false),
     ]
 }
 

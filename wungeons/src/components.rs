@@ -15,7 +15,25 @@ pub const DIRECTIONS: [(Keycode, Position); 4] = [
     (Keycode::Right, Position { x: 1, y: 0 }),
 ];
 
+pub const DIAGONAL_DIRECTIONS: [(Keycode, Position); 4] = [
+    (Keycode::Up, Position { x: -1, y: -1 }),
+    (Keycode::Down, Position { x: 1, y: 1 }),
+    (Keycode::Left, Position { x: -1, y: 1 }),
+    (Keycode::Right, Position { x: 1, y: -1 }),
+];
+
 impl ops::Add<&Position> for Position {
+    type Output = Position;
+
+    fn add(self, rhs: &Position) -> Position {
+        Position {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl ops::Add<&Position> for &Position {
     type Output = Position;
 
     fn add(self, rhs: &Position) -> Position {

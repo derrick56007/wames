@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     io::{stdout, Write},
-    time::Duration,
+    time::{Duration, SystemTime},
 };
 
 use crate::{
@@ -112,11 +112,11 @@ pub fn render(state: &mut State, components: &Vec<Component>) {
         .collect::<Vec<char>>();
     available_letters.sort();
     print!(
-        "\n+{:?}{:?}\n-{:?}",
-        available_letters,
+        "\n+[ {} ] {:?}\n-[ {} ]\n", //{:?}",
+        available_letters.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(", "),
         state.items,
-        state.letters_remaining,
-        // state.full_loop_duration.unwrap_or(Duration::ZERO)
+        state.letters_remaining.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(", "),
+        // SystemTime::now(),
     );
     stdout().flush().unwrap();
 }

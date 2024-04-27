@@ -8,18 +8,18 @@ use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     components::{
-        contains_point, get_item_char, intersects, line_rect, Component, Item, Position, Rect,
+        contains_point, get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS, DIRECTIONS
     },
     entity::{new_entity, Entity},
     render::bresenham,
     state::State,
 };
 
-const BIG_ROOM_WIDTH_RANGE: Range<usize> = 20..25;
-const BIG_ROOM_HEIGHT_RANGE: Range<usize> = 10..20;
+const BIG_ROOM_WIDTH_RANGE: Range<usize> = 11..15;
+const BIG_ROOM_HEIGHT_RANGE: Range<usize> = 7..11;
 
-const ROOM_WIDTH_RANGE: Range<usize> = 7..10;
-const ROOM_HEIGHT_RANGE: Range<usize> = 7..10;
+const ROOM_WIDTH_RANGE: Range<usize> = 6..9;
+const ROOM_HEIGHT_RANGE: Range<usize> = 4..6;
 
 fn generate_random_point_in_circle(rng: &mut ThreadRng, radius: isize) -> (isize, isize) {
     let random_angle = rng.gen::<f64>() * std::f64::consts::PI * 2.0;
@@ -105,7 +105,7 @@ pub fn create_rooms(
     let mut rooms: Vec<(Rect, Position, RoomType)> = vec![];
     let num_big_rooms = 4;
     let num_small_rooms = 5;
-    let num_rooms = 10;
+    let num_rooms = 5;
     let mut big_lines: Vec<(Position, Position)> = vec![];
 
     let grid_size: &Rect = &state.grid_size.clone();
@@ -240,36 +240,18 @@ pub fn create_rooms(
         // break;
         let room_type = **room_type;
         if room_type == RoomType::Boss {
-            for x in pos.x..pos.x + rect.width {
-                let pos = Position { x, y: pos.y };
-                if !wall_positions.contains(&pos) {
-                    entities.push(create_door(entity_id_counter, &pos));
-                }
+            let boss_position = rect.center(pos);
 
-                let pos = Position {
-                    x,
-                    y: pos.y + rect.height,
-                };
-                if !wall_positions.contains(&pos) {
-                    entities.push(create_door(entity_id_counter, &pos));
-                }
+            for (_, d) in DIRECTIONS {
+                entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
             }
-            for y in pos.y..pos.y + rect.height {
-                let pos = &Position { x: pos.x, y };
-                if !wall_positions.contains(&pos) {
-                    entities.push(create_door(entity_id_counter, &pos));
-                }
-                let pos = Position {
-                    x: pos.x + rect.width,
-                    y,
-                };
-                if !wall_positions.contains(&pos) {
-                    entities.push(create_door(entity_id_counter, &pos));
-                }
+            for (_, d) in DIAGONAL_DIRECTIONS {
+                entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
             }
+
             entities.push(create_minion(
                 entity_id_counter,
-                &rect.center(pos),
+                &boss_position,
                 minion_letters.pop().unwrap(),
                 true,
                 false,
