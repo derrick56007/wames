@@ -133,10 +133,10 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
         let keys: Vec<Keycode> = state.device_state.get_keys();
         let mut pressed_key: Option<Keycode> = None;
         for key in keys.iter() {
-            if Some(key) == state.last_pressed_key.as_ref() {
-                // ignore if same key is pressed twice
-                continue 'outer;
-            }
+            // if Some(key) == state.last_pressed_key.as_ref() {
+            //     // ignore if same key is pressed twice
+            //     continue 'outer;
+            // }
             pressed_key = Some(*key);
             state.last_pressed_key = pressed_key;
             for e in entities.iter().copied() {
@@ -185,7 +185,7 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
                                     sleep(Duration::from_millis(100));
 
                                     let won =
-                                        play(tries, state.available_letters.clone(), words_vec, Some(render));
+                                        play(tries, state.available_letters.clone(), words_vec, Some(render), false);
                                     if won {
                                         // dbg!(state.entities_map[&hit]
                                         //     .contains_component(&Component::Drop(None)));
@@ -248,10 +248,11 @@ pub fn inputs(state: &mut State, components: &Vec<Component>) {
             }
             return;
         }
-        if pressed_key.is_none() {
-            state.last_pressed_key = None;
-            continue 'outer;
-        }
+        // if pressed_key.is_none() {
+        //     state.last_pressed_key = None;
+        //     continue 'outer;
+        // }
+        sleep(Duration::from_millis(120));
     }
 }
 

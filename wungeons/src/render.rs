@@ -91,6 +91,10 @@ pub fn render(state: &mut State, components: &Vec<Component>) {
             '█' => {
                 new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
             }
+            '\n' => {
+                new_buffer = format!("{new_buffer}{}", &colorize(i.to_string(), "reset"));
+
+            }
             _ => {
                 new_buffer = format!(
                     "{new_buffer}{}",
@@ -108,10 +112,11 @@ pub fn render(state: &mut State, components: &Vec<Component>) {
         .collect::<Vec<char>>();
     available_letters.sort();
     print!(
-        "\n{:?} {:?}{:?}",
+        "\n+{:?}{:?}\n-{:?}",
         available_letters,
         state.items,
-        state.full_loop_duration.unwrap_or(Duration::ZERO)
+        state.letters_remaining,
+        // state.full_loop_duration.unwrap_or(Duration::ZERO)
     );
     stdout().flush().unwrap();
 }

@@ -12,5 +12,5 @@ fn main() {
         .split("\n")
         .map(|s| s.to_uppercase())
         .collect();
-    play(tries, available_letters, words_vec, None);
+    play(tries, available_letters, words_vec, None, false);
 }

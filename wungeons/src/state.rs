@@ -37,7 +37,8 @@ pub struct State {
 
 impl State {
     pub fn new(grid_size: Rect, system_components: Vec<Vec<Component>>) -> Self {
-        let mut available_letters: HashSet<char> = HashSet::from_iter("aeuio".to_uppercase().chars());
+        let mut available_letters: HashSet<char> =
+            HashSet::from_iter("aeuio".to_uppercase().chars());
         let mut letters_remaining = "abcdefghijklmnopqrstuvwxys".to_uppercase().to_string();
         let starting_letters_count = 10;
         let mut rng = rand::thread_rng();
@@ -87,11 +88,13 @@ impl State {
 
         while available_letters.len() < n {
             let new_letter = letters_remaining[self.rng.gen::<usize>() % letters_remaining.len()];
-            available_letters.insert(new_letter);
-            letters_remaining = String::from_iter(letters_remaining)
-                .replace(new_letter, "")
-                .chars()
-                .collect::<Vec<char>>()
+            if !available_letters.contains(&new_letter) {
+                available_letters.insert(new_letter);
+                letters_remaining = String::from_iter(letters_remaining)
+                    .replace(new_letter, "")
+                    .chars()
+                    .collect::<Vec<char>>()
+            }
         }
 
         available_letters.iter().copied().collect()
@@ -99,6 +102,10 @@ impl State {
 
     pub fn add_letter(&mut self, c: char) {
         self.available_letters.insert(c);
+        self.letters_remaining = String::from_iter(self.letters_remaining.iter())
+            .replace(c, "")
+            .chars()
+            .collect();
     }
 
     pub fn remove_entity(&mut self, id: usize) {

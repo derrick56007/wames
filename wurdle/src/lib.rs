@@ -42,7 +42,9 @@ pub fn play(
     available_letters: HashSet<char>,
     all_words_vec: Vec<String>,
     minion: Option<char>,
+    show_stats: bool,
 ) -> bool {
+    let debug = false;
     let words_set: HashSet<String> = HashSet::from_iter(all_words_vec.clone());
 
     // let args = env::args().collect::<Vec<String>>();
@@ -103,7 +105,9 @@ pub fn play(
             print!(" ({})", minion);
         }
         println!("\n==========================\n");
-        // println!("{}", &word);
+        if debug {
+            println!("{}", &word);
+        }
 
         if !attempts.is_empty() && !words_set.contains(attempts.last().unwrap()) {
             attempts.pop();
@@ -178,7 +182,7 @@ pub fn play(
         println!("\n");
         if let Some(ref text) = game_over_text {
             let scale = 2;
-            let stats = format!(
+            let mut stats = format!(
                 "    STATISTICS
 ==================
 Played:\t\t{}
@@ -361,6 +365,9 @@ GUESS DISTRIBUTION
                     &colors
                 ),
             );
+            if !show_stats {
+                stats = "press (enter) to continue".to_string();
+            }
             println!("\n{text}\n\n{stats}\n");
         }
         print!("> ");
@@ -377,6 +384,7 @@ GUESS DISTRIBUTION
         // }
 
         if game_over == true {
+
             if input == "y" {
                 game_over = false;
                 (word, word_vec, word_set) = get_word(false, &all_words_vec);
@@ -385,9 +393,10 @@ GUESS DISTRIBUTION
                 misplaced_letters.clear();
                 correct_letters.clear();
                 game_over_text = None;
-            } else if input == "n" {
+            } else if input == "n" || input.trim().is_empty() {
                 return won;
             }
+            
         } else {
             if input.len() > 5 {
                 input = input[input.len() - 5..].to_string();
