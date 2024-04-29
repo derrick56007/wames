@@ -68,12 +68,12 @@ pub fn render(state: &mut State, components: &[Component]) {
     entities.sort_by(|a, b| a.1.cmp(&b.1));
 
     for (e, _) in entities.iter() {
-        let entity = &state.entities_map[e];
+        let entity = &e;
 
-        let position = get_component!(entity, Component::Position).unwrap();
+        let position = get_component!(state.entities_map[entity], Component::Position).unwrap();
         let idx = state.grid_size.width * position.y + position.x;
 
-        if let Some(render_char) = get_component!(entity, Component::Render) {
+        if let Some(render_char) = get_component!(state.entities_map[entity], Component::Render) {
 
             buffer[idx as usize] = render_char;
         }
@@ -89,6 +89,9 @@ pub fn render(state: &mut State, components: &[Component]) {
     let mut new_buffer = "".to_string();
     for i in buffer {
         match i {
+            // '@' => {
+            //     new_buffer = format!("{new_buffer}{}", &colorize_background_rbg(colorize(i.to_string(), "foreground green"), 128, 128, 128));
+            // }
             ' ' => {
                 // new_buffer = format!(
                 //     "{new_buffer}{}",
@@ -120,10 +123,14 @@ pub fn render(state: &mut State, components: &[Component]) {
                 new_buffer = format!("{new_buffer}{}", &colorize(i.to_string(), "reset"));
             }
             _ => {
-                new_buffer = format!(
-                    "{new_buffer}{}",
-                    &colorize_background_rbg(i.to_string(), 128, 128, 128)
-                );
+                if i.is_ascii_alphabetic() || i == '!' || i == '?' {
+                    new_buffer = format!("{new_buffer}{}", &colorize(i.to_string(), "reset"));
+                } else {
+                    new_buffer = format!(
+                        "{new_buffer}{}",
+                        &colorize_background_rbg(i.to_string(), 128, 128, 128)
+                    );
+                }
             }
         }
     }
@@ -139,7 +146,7 @@ pub fn render(state: &mut State, components: &[Component]) {
 
     
     print!(
-        "\n+[ {} ]\n-[ {} ]\n{}g {:?}\n", //{:?}",
+        "\n+[ {} ]\n-[ {} ]\n{}g {:?}\n{}", //{:?}",
         available_letters
             .iter()
             .map(|c| c.to_string())
@@ -153,6 +160,7 @@ pub fn render(state: &mut State, components: &[Component]) {
             .join(", "),
         state.gold, // SystemTime::now(),
         state.items,
+        state.dialogue_input
     );
     // println!("");
     // for c in LETTERS.chars() {

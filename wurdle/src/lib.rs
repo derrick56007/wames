@@ -4,7 +4,7 @@ use std::{
     collections::{HashMap, HashSet},
     env,
     fs::{self, File, OpenOptions},
-    io::{self, Write},
+    io::{self, stdin, Read, Write},
     path::Path,
 };
 
@@ -44,6 +44,11 @@ pub fn play(
     minion: Option<char>,
     show_stats: bool,
 ) -> (bool, Vec<String>, String) {
+    print!("{}[2J", 27 as char);
+
+    print!("\x1B[2J\x1B[1;1H");
+    // stdin().read_to_end(&mut vec![]).unwrap();
+
     let debug = false;
     let words_set: HashSet<String> = HashSet::from_iter(all_words_vec.clone());
 
@@ -409,8 +414,10 @@ GUESS DISTRIBUTION
             if input.len() > 5 {
                 input = input[input.len() - 5..].to_string();
             }
+            if input != "" {
+                attempts.push(input.to_uppercase());
+            }
 
-            attempts.push(input.to_uppercase());
         }
     }
 }

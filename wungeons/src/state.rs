@@ -21,6 +21,7 @@ pub struct State {
     pub device_state: DeviceState,
     pub rng: ThreadRng,
     pub entity_id_counter: usize,
+    pub name: String,
 
     pub entities_map: HashMap<usize, Box<Entity>>,
     pub component_map: HashMap<Vec<Component>, HashSet<usize>>,
@@ -33,7 +34,7 @@ pub struct State {
     pub items: Vec<Item>,
     pub gold: usize,
     pub fog_enabled: bool,
-
+    pub dialogue_input: String,
     // pub systems: Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>,
 }
 
@@ -63,6 +64,8 @@ impl State {
             items: Vec::new(),
             gold: 0,
             fog_enabled: true,
+            dialogue_input: "".to_string(),
+            name: "".to_string(),
         };
         n.refresh();
         n
@@ -126,5 +129,17 @@ impl State {
         }
 
         self.entities_map.remove(&id);
+    }
+
+    pub fn remove_all_by_component(&mut self, component: Component) {
+        let key = vec![component];
+        // if !self.component_map.contains_key(&key) {
+        //     return;
+        // }
+
+        let entities = self.component_map[&key].clone();
+        for e in entities {
+            self.remove_entity(e);
+        }
     }
 }

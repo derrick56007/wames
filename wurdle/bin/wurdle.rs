@@ -1,11 +1,15 @@
 use std::{
     collections::{HashMap, HashSet},
-    io::{self, Read},
+    io::{self, stdin, Read},
 };
 
 use wurdle::{play, wurdle_words};
 
 fn main() {
+
+    
+    // stdin().read_line(&mut "".to_string());
+
     let tries = 6;
     let available_letters: HashSet<char> = HashSet::from_iter("".chars());
     let words_vec: Vec<String> = wurdle_words::WURDLE_WURDS

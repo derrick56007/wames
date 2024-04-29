@@ -7,7 +7,8 @@ use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     components::{
-        get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS, DIRECTIONS
+        get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS,
+        DIRECTIONS,
     },
     entity::{new_entity, Entity},
     render::bresenham,
@@ -99,7 +100,11 @@ pub fn create_rooms(
     // grid_size: &Rect,
     // entity_id_counter: &mut usize,
     state: &mut State,
-) -> (Vec<(Rect, Position, RoomType)>, Vec<Entity>, Vec<(Position, Position)>) {
+) -> (
+    Vec<(Rect, Position, RoomType)>,
+    Vec<Entity>,
+    Vec<(Position, Position)>,
+) {
     let mut rooms: Vec<(Rect, Position, RoomType)> = vec![];
     let num_big_rooms = 4;
     let num_small_rooms = 5;
@@ -293,14 +298,16 @@ pub fn create_rooms(
                 entity_id_counter,
                 &boss_position,
                 minion_letters.pop().unwrap(),
+                'Ӧ',
                 true,
                 false,
-            ))
+            ));
         } else if room_type == RoomType::Big {
             entities.push(create_minion(
                 entity_id_counter,
                 &rect.center(pos),
                 minion_letters.pop().unwrap(),
+                'ଳ',
                 false,
                 if !spawned_key {
                     spawned_key = true;
@@ -308,7 +315,7 @@ pub fn create_rooms(
                 } else {
                     false
                 },
-            ))
+            ));
         } else if room_type == RoomType::Secret {
             entities.push(create_item(entity_id_counter, &rect.center(pos), Item::Key))
         }
@@ -497,7 +504,6 @@ fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position, c: char) -> E
             Component::Render(Some(c)),
             Component::ZIndex(Some(0)),
             Component::Solid,
-
         ],
     )
 }
@@ -528,7 +534,7 @@ pub fn create_fog(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity 
             Component::Position(Some(wall_pos.clone())),
             Component::Render(Some(' ')),
             Component::ZIndex(Some(3)),
-            Component::Fog(Some(false))
+            Component::Fog(Some(false)),
         ],
     )
 }
@@ -563,13 +569,14 @@ fn create_minion(
     entity_id_counter: &mut usize,
     pos: &Position,
     c: char,
+    looks: char,
     is_boss: bool,
     spawn_key: bool,
 ) -> Entity {
     let mut comps = vec![
-        Component::Minion(Some(is_boss)),
+        Component::Minion(Some((is_boss, c))),
         Component::Position(Some(pos.clone())),
-        Component::Render(Some(c)),
+        Component::Render(Some(looks)),
         Component::ZIndex(Some(1)),
     ];
 

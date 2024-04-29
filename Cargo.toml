@@ -2,7 +2,7 @@
 
 members = [ 
     "template",
-    "wetris", "woker", 
+    "wetris", "winput", "woker", 
     "wungeons",
     "wurdle", "wursive",
 ]

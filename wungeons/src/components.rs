@@ -2,6 +2,8 @@ use std::ops;
 
 use device_query::Keycode;
 
+use crate::event::Event;
+
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub struct Position {
     pub x: isize,
@@ -123,7 +125,7 @@ pub fn contains_point(pos1: &Position, rect1: &Rect, pos2: &Position) -> bool {
 
 #[derive(Eq, PartialEq, Hash, Clone, Debug)]
 pub enum Component {
-    Minion(Option<bool>),
+    Minion(Option<(bool, char)>),
     Wall,
     SecretWall(Option<usize>),
     Room,
@@ -136,6 +138,10 @@ pub enum Component {
     Item(Option<Item>),
     Fog(Option<bool>),
     Solid,
+    Dialogue(Option<(String, Vec<(String, Event)>)>),
+    DialogueChar,
+    Activated(Option<bool>),
+    Cooldown(Option<usize>)
 }
 
 // #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -170,5 +176,9 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::SecretWall(_) => Component::SecretWall(None),
         Component::Fog(_) => Component::Fog(None),
         Component::Solid => Component::Solid,
+        Component::Dialogue(_) => Component::Dialogue(None),
+        Component::DialogueChar => Component::DialogueChar,
+        Component::Activated(_) => Component::Activated(None),
+        Component::Cooldown(_) => Component::Cooldown(None),
     }
 }
