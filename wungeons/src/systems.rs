@@ -5,7 +5,7 @@ use crate::{
     dialogue::dialogue,
     entity::{add_entity, new_entity},
     event::{game_events, Event},
-    fog::calculate_fog,
+    sight::sight,
     get_component,
     inputs::handle_inputs,
     render,
@@ -41,7 +41,7 @@ pub fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)
         //     false,
         // ),
         (
-            calculate_fog,
+            sight,
             vec![
                 Component::Position(None),
                 Component::Render(None),

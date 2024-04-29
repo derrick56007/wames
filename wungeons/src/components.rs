@@ -2,12 +2,16 @@ use std::ops;
 
 use device_query::Keycode;
 
-use crate::event::Event;
+use crate::{event::Event, sight::ViewType};
 
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug, Copy)]
 pub struct Position {
     pub x: isize,
     pub y: isize,
+}
+
+impl Position {
+    pub const ZERO: Position = Position {x: 0, y: 0};
 }
 
 pub const DIRECTIONS: [(Keycode, Position); 4] = [
@@ -143,6 +147,9 @@ pub enum Component {
     Activated(Option<bool>),
     Cooldown(Option<usize>),
     StepCount(Option<usize>),
+    AffectsFog,
+    ViewDistance(Option<usize>),
+    Viewable(Option<(ViewType, Vec<usize>)>)
 }
 
 // #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -182,5 +189,8 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::Activated(_) => Component::Activated(None),
         Component::Cooldown(_) => Component::Cooldown(None),
         Component::StepCount(_) => Component::StepCount(None),
+        Component::ViewDistance(_) => Component::ViewDistance(None),
+        Component::Viewable(_) => Component::Viewable(None),
+        Component::AffectsFog => Component::AffectsFog,
     }
 }

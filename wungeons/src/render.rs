@@ -129,7 +129,7 @@ pub fn render(state: &mut State, components: &[Component]) {
                 new_buffer = format!("{new_buffer}{}", &colorize(i.to_string(), "reset"));
             }
             _ => {
-                if i.is_ascii_alphabetic() || i == '!' || i == '?' {
+                if i.is_ascii_alphanumeric() || i == '!' || i == '?' {
                     new_buffer = format!("{new_buffer}{}", &colorize(i.to_string(), "reset"));
                 } else {
                     new_buffer = format!(

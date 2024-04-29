@@ -35,6 +35,7 @@ pub struct State {
     pub gold: usize,
     pub fog_enabled: bool,
     pub dialogue_input: String,
+    empty_entites_set: HashSet<usize>,
     // pub step_counter: usize,
     // pub systems: Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>,
 }
@@ -68,6 +69,7 @@ impl State {
             fog_enabled: true,
             dialogue_input: "".to_string(),
             name: "".to_string(),
+            empty_entites_set: HashSet::new(),
         };
         n.refresh();
         n
@@ -96,7 +98,7 @@ impl State {
     }
 
     pub fn get_entities(&self, components: &[Component]) -> &HashSet<usize> {
-        &self.component_map[components]
+        &self.component_map.get(components).unwrap_or(&self.empty_entites_set)
     }
 
     pub fn get_unchosen_letters_if_possible(&mut self, n: usize) -> Vec<char> {

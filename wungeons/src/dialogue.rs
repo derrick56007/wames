@@ -13,13 +13,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
         })
         .collect::<Vec<(usize, usize)>>();
     entities.sort_by(|a, b| a.1.cmp(&b.1));
-    // entities.reverse();
 
-    // let existing_char_entities = state.get_entities(&vec![Component::DialogueChar]).clone();
-    // state.remove_all_by_component(Component::DialogueChar);
-    // dbg!(&state.component_map.keys(), &entities);
-    // process::exit(0);
-    // return;
     for (e, z) in &entities {
         let activated = get_component!(state.entities_map[e], Component::Activated).unwrap();
         if activated {
@@ -47,7 +41,6 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                 state,
             );
         }
-        // let entity = &mut state.entities_map.get_mut(e).unwrap();
         state.set_component(*e, Component::Activated(Some(true)));
         break;
     }

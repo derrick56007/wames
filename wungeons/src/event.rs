@@ -4,8 +4,10 @@ use device_query::{DeviceQuery, Keycode};
 
 use crate::{
     components::{Component, Position},
+    create::{create_dialogue, create_player},
     entity::{add_entity, new_entity},
     rooms::create_rooms,
+    sight::ViewType,
     state::State,
 };
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -14,8 +16,12 @@ pub enum Event {
     Refresh,
     Welcome,
     None,
-    CreateName(Option<String>),
     ComponentChanged(Component),
+    // a viewed b
+    View(((usize, ViewType), (usize, ViewType))),
+
+    // dialogue
+    CreateName(Option<String>),
 }
 
 pub fn game_events(state: &mut State, _components: &[Component]) {
@@ -25,26 +31,41 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
     loop {
         if let Some(event) = state.events.pop() {
             match event {
+                Event::View(((a, ViewType::Player), (b, ViewType::Minion))) => {
+                    add_entity(
+                        create_dialogue(
+                            &mut state.entity_id_counter,
+                            format!("You see a minion"),
+                            vec![],
+                            Position::ZERO,
+                        ),
+                        state,
+                    );
+                },
+                Event::View(((a, ViewType::Player), (b, ViewType::SecretWall))) => {
+                    add_entity(
+                        create_dialogue(
+                            &mut state.entity_id_counter,
+                            format!("You see a crack in the wall"),
+                            vec![],
+                            Position::ZERO,
+                        ),
+                        state,
+                    );
+                }
+                Event::View(_) => {}
                 Event::ComponentChanged(c) => {
                     match c {
                         Component::StepCount(Some(count)) => {
                             // dbg!(count);
                             // process::exit(0);
                             if count == 5 {
-                                let index = state.entity_id_counter.clone();
-
                                 add_entity(
-                                    new_entity(
+                                    create_dialogue(
                                         &mut state.entity_id_counter,
-                                        vec![
-                                            Component::Activated(Some(false)),
-                                            Component::Dialogue(Some((
-                                                "Step 5!".to_string(),
-                                                vec![],
-                                            ))),
-                                            Component::Position(Some(Position { x: 0, y: 0 })),
-                                            Component::ZIndex(Some(index)),
-                                        ],
+                                        "Step 5!".to_string(),
+                                        vec![],
+                                        Position::ZERO,
                                     ),
                                     state,
                                 );
@@ -78,37 +99,22 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                 }
                 Event::None => {}
                 Event::Welcome => {
-                    let index = state.entity_id_counter.clone();
-
                     add_entity(
-                        new_entity(
+                        create_dialogue(
                             &mut state.entity_id_counter,
-                            vec![
-                                Component::Activated(Some(false)),
-                                Component::Dialogue(Some((
-                                    "Welcome to the game!".to_string(),
-                                    vec![],
-                                ))),
-                                Component::Position(Some(Position { x: 0, y: 0 })),
-                                Component::ZIndex(Some(index)),
-                            ],
+                            "Welcome to the game!".to_string(),
+                            vec![],
+                            Position::ZERO,
                         ),
                         state,
                     );
-                    let index = state.entity_id_counter.clone();
 
                     add_entity(
-                        new_entity(
+                        create_dialogue(
                             &mut state.entity_id_counter,
-                            vec![
-                                Component::Activated(Some(false)),
-                                Component::Dialogue(Some((
-                                    "What is your name?".to_string(),
-                                    vec![("".to_string(), Event::CreateName(None))],
-                                ))),
-                                Component::Position(Some(Position { x: 0, y: 0 })),
-                                Component::ZIndex(Some(index)),
-                            ],
+                            "What is your name?".to_string(),
+                            vec![("".to_string(), Event::CreateName(None))],
+                            Position::ZERO,
                         ),
                         state,
                     );
@@ -132,35 +138,24 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                         add_entity(room_entity, state);
                     }
                     // create player
-                    let entity = new_entity(
-                        &mut state.entity_id_counter,
-                        vec![
-                            Component::Position(Some(state.rooms[0].0.center(&state.rooms[0].1))),
-                            Component::Render(Some('@')),
-                            Component::ZIndex(Some(5)),
-                            Component::Player,
-                            Component::Cooldown(Some(PLAYER_WALK_COOLDOWN)),
-                        ],
+
+                    add_entity(
+                        create_player(
+                            &mut state.entity_id_counter,
+                            state.rooms[0].0.center(&state.rooms[0].1),
+                        ),
+                        state,
                     );
 
-                    add_entity(entity, state);
-
-                    let index = state.entity_id_counter.clone();
                     add_entity(
-                        new_entity(
+                        create_dialogue(
                             &mut state.entity_id_counter,
-                            vec![
-                                Component::Activated(Some(false)),
-                                Component::Dialogue(Some((
-                                    format!("Hello {}!", state.name).to_string(),
-                                    vec![],
-                                ))),
-                                Component::Position(Some(Position {
-                                    x: 0,
-                                    y: state.grid_size.height / 2,
-                                })),
-                                Component::ZIndex(Some(index)),
-                            ],
+                            format!("Hello {}!", state.name).to_string(),
+                            vec![],
+                            Position {
+                                x: 0,
+                                y: state.grid_size.height / 2,
+                            },
                         ),
                         state,
                     );
@@ -168,9 +163,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     add_entity(
                         new_entity(
                             &mut state.entity_id_counter,
-                            vec![
-                                Component::StepCount(Some(0)),
-                            ],
+                            vec![Component::StepCount(Some(0))],
                         ),
                         state,
                     );
@@ -182,4 +175,3 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
     }
 }
 
-pub const PLAYER_WALK_COOLDOWN: usize = 2;

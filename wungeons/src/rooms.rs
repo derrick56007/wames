@@ -9,10 +9,7 @@ use crate::{
     components::{
         get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS,
         DIRECTIONS,
-    },
-    entity::{new_entity, Entity},
-    render::bresenham,
-    state::State,
+    }, create::{create_door, create_floor, create_fog, create_item, create_minion, create_secret_wall, create_wall}, entity::{new_entity, Entity}, render::bresenham, state::State
 };
 
 const BIG_ROOM_WIDTH_RANGE: Range<usize> = 12..14;
@@ -495,108 +492,6 @@ pub fn create_rooms(
     )
 }
 
-fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position, c: char) -> Entity {
-    new_entity(
-        entity_id_counter,
-        vec![
-            Component::Wall,
-            Component::Position(Some(wall_pos.clone())),
-            Component::Render(Some(c)),
-            Component::ZIndex(Some(0)),
-            Component::Solid,
-        ],
-    )
-}
-
-fn create_secret_wall(
-    entity_id_counter: &mut usize,
-    wall_pos: &Position,
-    // c: char,
-    group: usize,
-) -> Entity {
-    new_entity(
-        entity_id_counter,
-        vec![
-            Component::SecretWall(Some(group)),
-            Component::Position(Some(wall_pos.clone())),
-            Component::Render(Some('█')),
-            Component::ZIndex(Some(2)),
-            Component::Solid,
-        ],
-    )
-}
-
-pub fn create_fog(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
-    new_entity(
-        entity_id_counter,
-        vec![
-            // Component::Wall,
-            Component::Position(Some(wall_pos.clone())),
-            Component::Render(Some(' ')),
-            Component::ZIndex(Some(3)),
-            Component::Fog(Some(false)),
-        ],
-    )
-}
-
-pub fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
-    new_entity(
-        entity_id_counter,
-        vec![
-            // Component::Wall,
-            Component::Position(Some(wall_pos.clone())),
-            Component::Render(Some('.')),
-            Component::ZIndex(Some(0)),
-            // Component::Fog(Some(FogState::Dark))
-        ],
-    )
-}
-
-fn create_door(entity_id_counter: &mut usize, pos: &Position) -> Entity {
-    new_entity(
-        entity_id_counter,
-        vec![
-            Component::Wall,
-            Component::Door,
-            Component::Position(Some(pos.clone())),
-            Component::Render(Some('$')),
-            Component::ZIndex(Some(1)),
-        ],
-    )
-}
-
-fn create_minion(
-    entity_id_counter: &mut usize,
-    pos: &Position,
-    c: char,
-    looks: char,
-    is_boss: bool,
-    spawn_key: bool,
-) -> Entity {
-    let mut comps = vec![
-        Component::Minion(Some((is_boss, c))),
-        Component::Position(Some(pos.clone())),
-        Component::Render(Some(looks)),
-        Component::ZIndex(Some(1)),
-    ];
-
-    if spawn_key {
-        comps.push(Component::Drop(Some(Item::Key)))
-    }
-    new_entity(entity_id_counter, comps)
-}
-
-pub fn create_item(entity_id_counter: &mut usize, pos: &Position, item: Item) -> Entity {
-    new_entity(
-        entity_id_counter,
-        vec![
-            Component::Position(Some(pos.clone())),
-            Component::Render(Some(get_item_char(&item))),
-            Component::ZIndex(Some(1)),
-            Component::Item(Some(item)),
-        ],
-    )
-}
 
 // pub fn create_ladder(entity_id_counter: &mut usize, pos: &Position, item: Item) -> Entity {
 //     new_entity(

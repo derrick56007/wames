@@ -1,9 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
-    io::BufRead,
-    process,
-    thread::sleep,
-    time::{Duration, SystemTime},
+    collections::{HashMap, HashSet}, env, io::BufRead, process, thread::sleep, time::{Duration, SystemTime}
 };
 
 use components::{Item, Position, DIRECTIONS};
@@ -12,11 +8,11 @@ use entity::new_entity;
 use event::Event;
 
 use render::bresenham;
-use rooms::{create_floor, create_item};
+// use rooms::{create_floor, create_item};
 use wurdle::{play, wurdle_words};
 
 use crate::{
-    components::{Component, Rect}, entity::add_entity, event::game_events, fog::calculate_fog, inputs::handle_inputs, rooms::create_rooms, state::State, systems::get_systems
+    components::{Component, Rect}, entity::add_entity, event::game_events, sight::sight, inputs::handle_inputs, rooms::create_rooms, state::State, systems::get_systems
 };
 
 mod components;
@@ -26,13 +22,16 @@ mod inputs;
 mod render;
 mod rooms;
 mod state;
-mod fog;
+mod sight;
 mod systems;
 mod dialogue;
+mod create;
 
 use crate::render::render;
 
 fn main() {
+    env::set_var("RUST_BACKTRACE", "1");
+
     const GRID_SIZE: Rect = Rect {
         width: 70,
         height: 34,

@@ -9,12 +9,7 @@ use device_query::{DeviceQuery, Keycode};
 use wurdle::{play, wurdle_words};
 
 use crate::{
-    components::{Component, Item, Position, DIRECTIONS},
-    entity::add_entity,
-    event::{Event, PLAYER_WALK_COOLDOWN},
-    get_component,
-    rooms::{create_floor, create_fog, create_item},
-    state::State,
+    components::{Component, Item, Position, DIRECTIONS}, create::{create_floor, create_fog, create_item, PLAYER_WALK_COOLDOWN}, entity::add_entity, event::Event, get_component, state::State
 };
 
 pub fn handle_inputs(state: &mut State, components: &[Component]) {
@@ -133,8 +128,24 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
     // state.last_pressed_key = Some(HashSet::from_iter(keys.clone()));
 
     'outer: for key in keys.iter() {
+        // if *key == Keycode::F {
+
+        //     dbg!(&keys, &dialogue_entities);
+        //     process::exit(0);
+        // }
         if state.last_pressed_keys.contains(key) && !dialogue_entities.is_empty() {
             continue;
+        }
+        else if state.last_pressed_keys.contains(key) {
+            match key {
+
+                Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
+
+                }
+                _ => {
+                    continue;
+                }
+            }
         }
         state.last_pressed_keys.insert(*key);
 
@@ -203,25 +214,20 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
         for e in entities.iter() {
             let entity = &e;
             let cooldown = get_component!(&state.entities_map[&e], Component::Cooldown).unwrap();
-            if cooldown > 0 {
-                state.set_component(*e, Component::Cooldown(Some(cooldown - 1)));
-                continue;
-            }
+
             state.set_component(*e, Component::Cooldown(Some(PLAYER_WALK_COOLDOWN)));
 
             let position: Position =
                 get_component!(state.entities_map[entity], Component::Position).unwrap();
 
+            
             // match key {
-            //     Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
-            //         break;
+            //      => {
+            //         // break;
             //     }
             //     _ => {
-            //         if let Some(last_pressed_key) = state.last_pressed_key {
-            //             if last_pressed_key == *key {
-            //                 // ignore if same key is pressed twice
-            //                 continue 'outer;
-            //             }
+            //         if state.last_pressed_keys.contains(key) {
+            //             continue 'outer;
             //         }
             //     }
             // }
@@ -234,6 +240,10 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                     state.fog_enabled = !state.fog_enabled;
                 }
                 Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
+                    if cooldown > 0 {
+                        state.set_component(*e, Component::Cooldown(Some(cooldown - 1)));
+                        continue;
+                    }
                     let new_position = &position + &directions[key];
 
                     // check for collisions
