@@ -26,10 +26,13 @@ pub struct State {
     pub component_map: HashMap<Vec<Component>, HashSet<usize>>,
     pub system_components: Vec<Vec<Component>>,
     pub rooms: Vec<(Rect, Position, RoomType)>,
+    pub hallways: Vec<(Position, Position)>,
     pub available_letters: HashSet<char>,
     pub full_loop_duration: Option<Duration>,
     pub letters_remaining: Vec<char>,
     pub items: Vec<Item>,
+    pub gold: usize,
+
     // pub systems: Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>,
 }
 
@@ -49,6 +52,7 @@ impl State {
             component_map: HashMap::new(),
             system_components,
             rooms: Vec::new(),
+            hallways: Vec::new(),
             change_events: Vec::new(),
             letters_remaining: Vec::new(),
             // system_components: HashSet::new(),
@@ -56,6 +60,7 @@ impl State {
             available_letters: HashSet::new(),
             full_loop_duration: None,
             items: Vec::new(),
+            gold: 0,
         };
         n.refresh();
         n
@@ -63,22 +68,22 @@ impl State {
 
     pub fn refresh(&mut self) {
         let mut available_letters: HashSet<char> =
-            HashSet::from_iter("aeuio".to_uppercase().chars());
-        let mut letters_remaining = "abcdefghijklmnopqrstuvwxys".to_uppercase().to_string();
-        let starting_letters_count = 10;
+            HashSet::from_iter("aerotlisncuyd".to_uppercase().chars());
+        let mut letters_remaining = "abcdefghijklmnopqrstuvwxyz".to_uppercase().to_string();
+        // let starting_letters_count = 10;
         for c in &available_letters {
             letters_remaining = letters_remaining.replace(*c, "");
         }
         let mut letters_remaining = letters_remaining.chars().collect::<Vec<char>>();
 
-        while available_letters.len() < starting_letters_count {
-            let new_letter = letters_remaining[self.rng.gen::<usize>() % letters_remaining.len()];
-            available_letters.insert(new_letter);
-            letters_remaining = String::from_iter(letters_remaining)
-                .replace(new_letter, "")
-                .chars()
-                .collect::<Vec<char>>()
-        }
+        // while available_letters.len() < starting_letters_count {
+        //     let new_letter = letters_remaining[self.rng.gen::<usize>() % letters_remaining.len()];
+        //     available_letters.insert(new_letter);
+        //     letters_remaining = String::from_iter(letters_remaining)
+        //         .replace(new_letter, "")
+        //         .chars()
+        //         .collect::<Vec<char>>()
+        // }
         self.available_letters = available_letters;
         self.letters_remaining = letters_remaining;
     }

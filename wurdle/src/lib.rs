@@ -43,7 +43,7 @@ pub fn play(
     all_words_vec: Vec<String>,
     minion: Option<char>,
     show_stats: bool,
-) -> bool {
+) -> (bool, Vec<String>, String) {
     let debug = false;
     let words_set: HashSet<String> = HashSet::from_iter(all_words_vec.clone());
 
@@ -69,6 +69,20 @@ pub fn play(
             }
         })
         .collect();
+    // if choice_words.is_empty() {
+    //     choice_words = all_words_vec
+    //         .clone()
+    //         .iter()
+    //         .map(|s| s.to_string())
+    //         .filter(|s| {
+    //             if let Some(minion) = minion {
+    //                 s.contains(minion)
+    //             } else {
+    //                 true
+    //             }
+    //         })
+    //         .collect()
+    // }
     let (mut word, mut word_vec, mut word_set) = get_word(
         if let Some(arg) = env::args().nth(1) {
             arg == "daily"
@@ -389,7 +403,7 @@ GUESS DISTRIBUTION
                 correct_letters.clear();
                 game_over_text = None;
             } else if input == "n" || input.trim().is_empty() {
-                return won;
+                return (won, attempts, word);
             }
         } else {
             if input.len() > 5 {

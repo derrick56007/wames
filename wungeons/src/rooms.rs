@@ -7,8 +7,7 @@ use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     components::{
-        get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS,
-        DIRECTIONS,
+        get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS, DIRECTIONS
     },
     entity::{new_entity, Entity},
     render::bresenham,
@@ -100,7 +99,7 @@ pub fn create_rooms(
     // grid_size: &Rect,
     // entity_id_counter: &mut usize,
     state: &mut State,
-) -> (Vec<(Rect, Position, RoomType)>, Vec<Entity>) {
+) -> (Vec<(Rect, Position, RoomType)>, Vec<Entity>, Vec<(Position, Position)>) {
     let mut rooms: Vec<(Rect, Position, RoomType)> = vec![];
     let num_big_rooms = 4;
     let num_small_rooms = 5;
@@ -233,7 +232,7 @@ pub fn create_rooms(
     let mut secret_hallways: Vec<(Position, Position)> = vec![];
 
     // dig hallways
-    for (pos1, pos2) in hallways {
+    for (pos1, pos2) in &hallways {
         let (rect, pos, _) = final_rooms[len - 1];
         if !line_rect(
             pos1.x as f64,
@@ -248,9 +247,10 @@ pub fn create_rooms(
             for line_pos in bresenham(&pos1, &pos2) {
                 wall_positions.remove(&line_pos);
                 entities.push(create_floor(entity_id_counter, &line_pos));
+                entities.push(create_fog(entity_id_counter, &line_pos));
             }
         }
-        secret_hallways.push((pos1, pos2));
+        secret_hallways.push((pos1.clone(), pos2.clone()));
     }
 
     // dig out rooms
@@ -259,6 +259,7 @@ pub fn create_rooms(
             for y in pos.y + 1..pos.y + rect.height {
                 wall_positions.remove(&Position { x, y });
                 entities.push(create_floor(entity_id_counter, &Position { x, y }));
+                entities.push(create_fog(entity_id_counter, &Position { x, y }));
             }
         }
     }
@@ -483,6 +484,7 @@ pub fn create_rooms(
             })
             .collect::<Vec<(Rect, Position, RoomType)>>(),
         entities,
+        hallways,
     )
 }
 
@@ -494,6 +496,8 @@ fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position, c: char) -> E
             Component::Position(Some(wall_pos.clone())),
             Component::Render(Some(c)),
             Component::ZIndex(Some(0)),
+            Component::Solid,
+
         ],
     )
 }
@@ -511,6 +515,20 @@ fn create_secret_wall(
             Component::Position(Some(wall_pos.clone())),
             Component::Render(Some('█')),
             Component::ZIndex(Some(2)),
+            Component::Solid,
+        ],
+    )
+}
+
+pub fn create_fog(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
+    new_entity(
+        entity_id_counter,
+        vec![
+            // Component::Wall,
+            Component::Position(Some(wall_pos.clone())),
+            Component::Render(Some(' ')),
+            Component::ZIndex(Some(3)),
+            Component::Fog(Some(false))
         ],
     )
 }
@@ -523,6 +541,7 @@ pub fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entit
             Component::Position(Some(wall_pos.clone())),
             Component::Render(Some('.')),
             Component::ZIndex(Some(0)),
+            // Component::Fog(Some(FogState::Dark))
         ],
     )
 }

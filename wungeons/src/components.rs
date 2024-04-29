@@ -134,7 +134,15 @@ pub enum Component {
     Player,
     Drop(Option<Item>),
     Item(Option<Item>),
+    Fog(Option<bool>),
+    Solid,
 }
+
+// #[derive(Eq, PartialEq, Hash, Clone, Debug)]
+// pub enum FogState {
+//     Dark(bool),
+//     Lit,
+// }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug, PartialOrd, Ord)]
 pub enum Item {
@@ -160,5 +168,7 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::Drop(_) => Component::Drop(None),
         Component::Item(_) => Component::Item(None),
         Component::SecretWall(_) => Component::SecretWall(None),
+        Component::Fog(_) => Component::Fog(None),
+        Component::Solid => Component::Solid,
     }
 }

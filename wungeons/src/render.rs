@@ -67,9 +67,11 @@ pub fn render(state: &mut State, components: &[Component]) {
         let position = get_component!(entity, Component::Position).unwrap();
         let idx = state.grid_size.width * position.y + position.x;
 
-        let render_char = get_component!(entity, Component::Render).unwrap();
+        if let Some(render_char) = get_component!(entity, Component::Render) {
 
-        buffer[idx as usize] = render_char;
+            buffer[idx as usize] = render_char;
+        }
+
     }
     for i in (0..state.grid_size.height).rev() {
         buffer.insert((i * state.grid_size.width) as usize, '\n')
@@ -121,22 +123,44 @@ pub fn render(state: &mut State, components: &[Component]) {
         .copied()
         .collect::<Vec<char>>();
     available_letters.sort();
+    // const LETTERS: &str = "Q W E R T Y U I O P\n A S D F G H J K L\n  Z X C V B N M";
+
+    
     print!(
-        "\n+[ {} ] {:?}\n-[ {} ]\n", //{:?}",
+        "\n+[ {} ]\n-[ {} ]\n{}g {:?}\n", //{:?}",
         available_letters
             .iter()
             .map(|c| c.to_string())
             .collect::<Vec<String>>()
             .join(", "),
-        state.items,
         state
             .letters_remaining
             .iter()
             .map(|c| c.to_string())
             .collect::<Vec<String>>()
             .join(", "),
-        // SystemTime::now(),
+        state.gold, // SystemTime::now(),
+        state.items,
     );
+    // println!("");
+    // for c in LETTERS.chars() {
+    //     print!(
+    //         "{}",
+    //         colorize(
+    //             c.into(),
+    //             if c == ' ' || state.letters_remaining.contains(&c)
+                    
+                    
+    //             {
+    //                 "reset"
+    //             } else {
+    //                 "background white"
+    //             },
+    //         )
+    //     )
+    // }
+    // println!("");
+
     stdout().flush().unwrap();
 }
 

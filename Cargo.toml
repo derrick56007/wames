@@ -1,8 +1,9 @@
 [workspace]
 
-members = [
-    "wetris", 
+members = [ 
+    "template",
+    "wetris", "woker", 
     "wungeons",
-    "wurdle",
+    "wurdle", "wursive",
 ]
 resolver = "2"

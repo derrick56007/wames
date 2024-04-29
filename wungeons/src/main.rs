@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     io::BufRead,
+    process,
     thread::sleep,
     time::{Duration, SystemTime},
 };
@@ -10,12 +11,14 @@ use device_query::{DeviceQuery, Keycode};
 use entity::new_entity;
 use event::Event;
 
+use render::bresenham;
 use rooms::{create_floor, create_item};
 use wurdle::{play, wurdle_words};
 
 use crate::{
     components::{Component, Rect},
     entity::add_entity,
+    inputs::handle_inputs,
     rooms::create_rooms,
     state::State,
 };
@@ -23,6 +26,7 @@ use crate::{
 mod components;
 mod entity;
 mod event;
+mod inputs;
 mod render;
 mod rooms;
 mod state;
@@ -66,6 +70,7 @@ fn main() {
 }
 
 pub fn start_up(state: &mut State, _components: &[Component]) {
+    state.events.push(Event::Refresh);
     state.events.push(Event::GameStart);
 }
 
@@ -73,6 +78,9 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
     loop {
         if let Some(event) = state.events.pop() {
             match event {
+                Event::Refresh => {
+                    state.refresh();
+                }
                 Event::GameStart => {
                     // remove all entities
                     let entity_ids: Vec<usize> = state.entities_map.keys().cloned().collect();
@@ -81,8 +89,10 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     }
 
                     state.rooms.clear();
-                    let (rooms, room_entities) = create_rooms(state);
+                    state.hallways.clear();
+                    let (rooms, room_entities, hallways) = create_rooms(state);
                     state.rooms.extend(rooms);
+                    state.hallways.extend(hallways);
                     for room_entity in room_entities {
                         add_entity(room_entity, state);
                     }
@@ -92,11 +102,10 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                         vec![
                             Component::Position(Some(state.rooms[0].0.center(&state.rooms[0].1))),
                             Component::Render(Some('@')),
-                            Component::ZIndex(Some(2)),
+                            Component::ZIndex(Some(5)),
                             Component::Player,
                         ],
                     );
-                    state.refresh();
 
                     add_entity(entity, state);
                 }
@@ -107,195 +116,158 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
     }
 }
 
-pub fn inputs(state: &mut State, components: &[Component]) {
-    let entities = state.component_map[components].clone();
-    let minion_entities = state.component_map[&vec![Component::Minion(None)]].clone();
-    let item_entities = state
-        .component_map
-        .get(&vec![Component::Item(None)])
-        .unwrap_or(&HashSet::new())
+pub fn calculate_fog(state: &mut State, components: &[Component]) {
+    let fog_enabled = true;
+    let fog_entities = state.get_entities(components).clone();
+    let player = state.get_entities(&[Component::Player]).clone();
+    let solid_positions = state
+        .get_entities(&[Component::Position(None), Component::Solid])
         .clone();
-    let door_entities = state.component_map[&vec![Component::Door]].clone();
-    let wall_entities = state.component_map[&vec![Component::Wall]].clone();
-
-    let secret_wall_entities = state.component_map[&vec![Component::SecretWall(None)]].clone();
-
-    // dbg!(&state.component_map);
-
-    let entity_ids: Vec<usize> = state.entities_map.keys().cloned().collect();
-    let directions: HashMap<Keycode, Position> = HashMap::from_iter(DIRECTIONS);
-    let other_positions = entity_ids
+    let solid_positions = solid_positions
         .iter()
-        .map(|e| {
-            (
-                *e,
-                get_component!(state.entities_map[e], Component::Position).unwrap(),
-            )
-        })
-        .collect::<Vec<(usize, Position)>>();
+        .map(|e| get_component!(state.entities_map[e], Component::Position).unwrap())
+        .collect::<Vec<Position>>();
 
-    // 'outer: loop {
-    let keys: Vec<Keycode> = state.device_state.get_keys();
-    let mut pressed_key: Option<Keycode> = None;
-    'outer: for key in keys.iter() {
-        // if Some(key) == state.last_pressed_key.as_ref() {
-        //     // ignore if same key is pressed twice
-        //     continue 'outer;
-        // }
-        pressed_key = Some(*key);
-        state.last_pressed_key = pressed_key;
-        for e in entities.iter() {
-            let entity = &state.entities_map[e];
-            let position: Position = get_component!(entity, Component::Position).unwrap();
-
-            match key {
-                Keycode::R => {
-                    state.events.push(Event::GameStart);
-                }
-                Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
-                    let new_position = &position + &directions[key];
-                    // check for collisions
-                    let hits = other_positions
-                        .iter()
-                        .filter_map(|(i, p)| if p == &new_position { Some(*i) } else { None })
-                        .collect::<Vec<usize>>();
-
-                    // if hits.is_empty() {
-                    //     state
-                    //         .entities_map
-                    //         .get_mut(&e)
-                    //         .unwrap()
-                    //         .set_component(Component::Position(Some(new_position.clone())));
-                    // } else {
-                    // minion_entities.retain(f)
-                    // dbg!(&minion_entities, &hits);
-                    // process::exit(0);
-                    'check_hits: for hit in hits {
-                        if minion_entities.contains(&hit) {
-                            let render: char =
-                                get_component!(&state.entities_map[&hit], Component::Render)
-                                    .unwrap();
-                            let is_boss =
-                                get_component!(&state.entities_map[&hit], Component::Minion)
-                                    .unwrap();
-                            state.add_letter(render);
-
-                            let tries = 6;
-                            let words_vec: Vec<String> = wurdle_words::WURDLE_WURDS
-                                .split('\n')
-                                .map(|s| s.to_uppercase())
-                                .collect();
-
-                            sleep(Duration::from_millis(100));
-
-                            let won = play(
-                                tries,
-                                state.available_letters.clone(),
-                                words_vec,
-                                Some(render),
-                                false,
-                            );
-                            if won {
-                                // dbg!(state.entities_map[&hit]
-                                //     .contains_component(&Component::Drop(None)));
-                                // process::exit(0);
-                                if dbg!(state.entities_map[&hit]
-                                    .contains_component(&Component::Drop(None)))
-                                {
-                                    let drop =
-                                        get_component!(&state.entities_map[&hit], Component::Drop)
-                                            .unwrap();
-                                    add_entity(
-                                        create_item(
-                                            &mut state.entity_id_counter,
-                                            &new_position,
-                                            drop,
-                                        ),
-                                        state,
-                                    );
-                                }
-                                if is_boss {
-                                    state.events.push(Event::GameStart);
-                                }
-                                state.remove_entity(hit);
-                            } else {
-                                todo!();
-                            }
-                            break 'outer;
-                        } else if item_entities.contains(&hit) {
-                            let item =
-                                get_component!(&state.entities_map[&hit], Component::Item).unwrap();
-                            state.items.push(item);
-                            state.remove_entity(hit);
-                            break 'outer;
-                        } else if door_entities.contains(&hit) {
-                            // let item = get_component!(
-                            //     &state.entities_map[&hit],
-                            //     Component::Item
-                            // )
-                            // .unwrap();
-                            if state.items.contains(&Item::Key) {
-                                state
-                                    .items
-                                    .remove(state.items.binary_search(&Item::Key).unwrap());
-
-                                for hit in &door_entities {
-                                    state.remove_entity(*hit);
-                                }
-                            }
-                            break 'outer;
-                        } else if wall_entities.contains(&hit) {
-                            break 'outer;
-                        } else if secret_wall_entities.contains(&hit) {
-                            let group =
-                                get_component!(&state.entities_map[&hit], Component::SecretWall)
-                                    .unwrap();
-                            for e in secret_wall_entities.iter() {
-                                let groupb =
-                                    get_component!(&state.entities_map[&e], Component::SecretWall)
-                                        .unwrap();
-
-                                let pos =
-                                    get_component!(&state.entities_map[&e], Component::Position)
-                                        .unwrap();
-
-                                if groupb == group {
-                                    state.remove_entity(*e);
-                                    add_entity(create_floor(&mut state.entity_id_counter, &pos), state);
-                                }
-                            }
-                        }
-                        // break;
-                    }
-
+    for f in fog_entities.iter() {
+        let fog = get_component!(state.entities_map[f], Component::Fog).unwrap();
+        if fog_enabled {
+            match fog {
+                true => {
                     state
                         .entities_map
-                        .get_mut(e)
+                        .get_mut(f)
                         .unwrap()
-                        .set_component(Component::Position(Some(new_position.clone())));
-                    // }
+                        .set_component(Component::Render(Some('~')));
                 }
-                // Keycode::Space => {
+                _ => {
+                    state
+                        .entities_map
+                        .get_mut(f)
+                        .unwrap()
+                        .set_component(Component::Render(Some(' ')));
+                }
+            }
+        } else {
+            state
+                .entities_map
+                .get_mut(f)
+                .unwrap()
+                .set_component(Component::Render(None));
+        }
+    }
+    if !fog_enabled {
+        return;
+    }
+    for p in player {
+        let player_pos = get_component!(state.entities_map[&p], Component::Position).unwrap();
+        let mut positions = HashSet::new();
+        for (rect, pos, _) in &state.rooms {
+            for x in pos.x..pos.x + rect.width {
+                for p in bresenham(&player_pos, &Position { x, y: pos.y }) {
+                    if solid_positions.contains(&p) {
+                        break;
+                    }
+                    positions.insert(p);
+                }
+                for p in bresenham(
+                    &player_pos,
+                    &Position {
+                        x,
+                        y: pos.y + rect.height,
+                    },
+                ) {
+                    if solid_positions.contains(&p) {
+                        break;
+                    }
+                    positions.insert(p);
+                }
+            }
 
-                // }
-                _ => {}
+            for y in pos.y..pos.y + rect.height {
+                for p in bresenham(&player_pos, &Position { x: pos.x, y }) {
+                    if solid_positions.contains(&p) {
+                        break;
+                    }
+                    positions.insert(p);
+                }
+                for p in bresenham(
+                    &player_pos,
+                    &Position {
+                        x: pos.x + rect.width,
+                        y,
+                    },
+                ) {
+                    if solid_positions.contains(&p) {
+                        break;
+                    }
+                    positions.insert(p);
+                }
             }
         }
-        // break 'outer;
+        for (pos1, pos2) in &state.hallways {
+            for p in bresenham(&player_pos, pos1) {
+                if solid_positions.contains(&p) {
+                    break;
+                }
+                positions.insert(p);
+            }
+            for p in bresenham(&player_pos, pos2) {
+                if solid_positions.contains(&p) {
+                    break;
+                }
+                positions.insert(p);
+            }
+        }
+
+        for f in fog_entities.iter() {
+            let fog_pos = get_component!(state.entities_map[f], Component::Position).unwrap();
+            if positions.contains(&fog_pos) {
+                let visited = get_component!(state.entities_map[f], Component::Fog).unwrap();
+                match visited {
+                    // components::FogState::Dark(true) => {
+                    //     state.entities_map.get_mut(f).unwrap().set_component(Component::Render(Some('*')));
+                    // },
+                    false => {
+                        state
+                            .entities_map
+                            .get_mut(f)
+                            .unwrap()
+                            .set_component(Component::Fog(Some(true)));
+                    }
+                    _ => {} // components::FogState::Clear => {
+
+                            // },
+                }
+                state
+                    .entities_map
+                    .get_mut(f)
+                    .unwrap()
+                    .set_component(Component::Render(None));
+            } else {
+            }
+        }
     }
-    // if pressed_key.is_none() {
-    //     state.last_pressed_key = None;
-    //     continue 'outer;
-    // }
-    // process::exit(code)
-    sleep(Duration::from_millis(50));
-    // }
 }
 
 fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)> {
     vec![
         (start_up, vec![], true),
         (game_events, vec![], false),
+        (
+            dummy,
+            vec![Component::Position(None), Component::Solid],
+            false,
+        ),
+        (
+            calculate_fog,
+            vec![
+                Component::Position(None),
+                Component::Render(None),
+                Component::ZIndex(None),
+                Component::Fog(None),
+            ],
+            false,
+        ),
         (
             render,
             vec![
@@ -305,9 +277,9 @@ fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)> {
             ],
             false,
         ),
-        (inputs, vec![Component::Player], false),
+        (handle_inputs, vec![Component::Player], false),
         // (collisions, vec![], false),
     ]
 }
 
-// fn collisions(state: &mut State, components: &Vec<Component>) {}
+fn dummy(state: &mut State, components: &[Component]) {}
