@@ -29,11 +29,17 @@ const COLORS: [(&str, &str); 17] = [
     ("reset", "\x1b[0m"),
 ];
 
-fn colorize(input: String, color: &str) -> String {
+pub fn colorize(input: String, color: &str) -> String {
     let colors: HashMap<&str, &str> = HashMap::from_iter(COLORS);
 
     format!("{}{input}\x1b[0m", colors[color])
 }
+
+// pub fn colorize_c(input: char, color: &str) -> String {
+//     let colors: HashMap<&str, &str> = HashMap::from_iter(COLORS);
+
+//     format!("{}{input}\x1b[0m", colors[color])
+// }
 
 fn colorize_foreground_rbg(input: String, r: u8, g: u8, b: u8) -> String {
     format!("\x1b[38;2;{r};{g};{b}m{input}\x1b[0m")
@@ -96,6 +102,12 @@ pub fn render(state: &mut State, components: &[Component]) {
                 //     "{new_buffer}{}",
                 //     &colorize_background_rbg(i.to_string(), 128, 128, 128)
                 // );
+            }
+            '░' => {
+                new_buffer = format!(
+                    "{new_buffer}{}",
+                    &colorize_background_rbg(i.to_string(), 1, 1, 1)
+                );
             }
             '.' => {
                 // new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));

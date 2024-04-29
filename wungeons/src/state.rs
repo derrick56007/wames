@@ -32,6 +32,7 @@ pub struct State {
     pub letters_remaining: Vec<char>,
     pub items: Vec<Item>,
     pub gold: usize,
+    pub fog_enabled: bool,
 
     // pub systems: Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>,
 }
@@ -61,6 +62,7 @@ impl State {
             full_loop_duration: None,
             items: Vec::new(),
             gold: 0,
+            fog_enabled: true,
         };
         n.refresh();
         n

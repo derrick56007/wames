@@ -117,7 +117,6 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
 }
 
 pub fn calculate_fog(state: &mut State, components: &[Component]) {
-    let fog_enabled = true;
     let fog_entities = state.get_entities(components).clone();
     let player = state.get_entities(&[Component::Player]).clone();
     let solid_positions = state
@@ -130,14 +129,14 @@ pub fn calculate_fog(state: &mut State, components: &[Component]) {
 
     for f in fog_entities.iter() {
         let fog = get_component!(state.entities_map[f], Component::Fog).unwrap();
-        if fog_enabled {
+        if state.fog_enabled {
             match fog {
                 true => {
                     state
                         .entities_map
                         .get_mut(f)
                         .unwrap()
-                        .set_component(Component::Render(Some('~')));
+                        .set_component(Component::Render(Some('░')));
                 }
                 _ => {
                     state
@@ -155,7 +154,7 @@ pub fn calculate_fog(state: &mut State, components: &[Component]) {
                 .set_component(Component::Render(None));
         }
     }
-    if !fog_enabled {
+    if !state.fog_enabled {
         return;
     }
     for p in player {

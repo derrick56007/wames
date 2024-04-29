@@ -3,7 +3,7 @@ use std::{collections::{HashMap, HashSet}, process, thread::sleep, time::Duratio
 use device_query::{DeviceQuery, Keycode};
 use wurdle::{play, wurdle_words};
 
-use crate::{components::{Component, Item, Position, DIRECTIONS}, entity::add_entity, event::Event, get_component, rooms::{create_floor, create_item}, state::State};
+use crate::{components::{Component, Item, Position, DIRECTIONS}, entity::add_entity, event::Event, get_component, rooms::{create_floor, create_fog, create_item}, state::State};
 
 
 pub fn handle_inputs(state: &mut State, components: &[Component]) {
@@ -51,6 +51,9 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                 Keycode::R => {
                     state.events.push(Event::Refresh);
                     state.events.push(Event::GameStart);
+                }
+                Keycode::F => {
+                    state.fog_enabled = !state.fog_enabled;
                 }
                 Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
                     let new_position = &position + &directions[key];
@@ -169,6 +172,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                                 if groupb == group {
                                     state.remove_entity(*e);
                                     add_entity(create_floor(&mut state.entity_id_counter, &pos), state);
+                                    add_entity(create_fog(&mut state.entity_id_counter, &pos), state);
                                 }
                             }
                         }
