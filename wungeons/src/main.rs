@@ -28,6 +28,7 @@ mod rooms;
 mod state;
 mod fog;
 mod systems;
+mod dialogue;
 
 use crate::render::render;
 
@@ -64,5 +65,10 @@ fn main() {
         to_remove.clear();
 
         state.full_loop_duration = Some(SystemTime::now().duration_since(start).unwrap());
+        
+
+        if state.full_loop_duration.unwrap() < Duration::from_millis(16) {
+            sleep(Duration::from_millis(16) - state.full_loop_duration.unwrap());
+        }
     }
 }

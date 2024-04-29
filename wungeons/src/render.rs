@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     io::{stdout, Write},
 };
 
@@ -66,11 +66,17 @@ pub fn render(state: &mut State, components: &[Component]) {
         })
         .collect::<Vec<(usize, usize)>>();
     entities.sort_by(|a, b| a.1.cmp(&b.1));
+    // entities.reverse();
+    let mut visited_positions = HashSet::<Position>::new();
 
     for (e, _) in entities.iter() {
         let entity = &e;
 
         let position = get_component!(state.entities_map[entity], Component::Position).unwrap();
+        // if visited_positions.contains(&position) {
+        //     continue;
+        // }
+        // visited_positions.insert(position.clone());
         let idx = state.grid_size.width * position.y + position.x;
 
         if let Some(render_char) = get_component!(state.entities_map[entity], Component::Render) {

@@ -18,24 +18,67 @@ use crate::{
 };
 
 pub fn handle_inputs(state: &mut State, components: &[Component]) {
-    let entities = state.component_map[components].clone();
-    let minion_entities = state.component_map[&vec![Component::Minion(None)]].clone();
+    let entities = state
+        .component_map
+        .get(components)
+        .unwrap_or(&HashSet::new())
+        .clone();
+    let minion_entities = state
+        .component_map
+        .get(&vec![Component::Minion(None)])
+        .unwrap_or(&HashSet::new())
+        .clone();
     let item_entities = state
         .component_map
         .get(&vec![Component::Item(None)])
         .unwrap_or(&HashSet::new())
         .clone();
-    let door_entities = state.component_map[&vec![Component::Door]].clone();
-    let wall_entities = state.component_map[&vec![Component::Wall]].clone();
-    let dialogue_entities = state.component_map[&vec![Component::Dialogue(None)]].clone();
+    let door_entities = state
+        .component_map
+        .get(&vec![Component::Door])
+        .unwrap_or(&HashSet::new())
+        .clone();
+    let wall_entities = state
+        .component_map
+        .get(&vec![Component::Wall])
+        .unwrap_or(&HashSet::new())
+        .clone();
+    let dialogue_entities = state
+        .component_map
+        .get(&vec![Component::Dialogue(None)])
+        .unwrap_or(&HashSet::new())
+        .clone();
+    let mut dialogue_entities = dialogue_entities
+        .iter()
+        .map(|e| {
+            (
+                *e,
+                get_component!(state.entities_map[e], Component::ZIndex).unwrap(),
+            )
+        })
+        .collect::<Vec<(usize, usize)>>();
+    let mut step_count_entities = state
+        .component_map
+        .get(&vec![Component::StepCount(None)])
+        .unwrap_or(&HashSet::new())
+        .clone();
 
-    let secret_wall_entities = state.component_map[&vec![Component::SecretWall(None)]].clone();
+    dialogue_entities.sort_by(|a, b| a.1.cmp(&b.1));
+
+    let secret_wall_entities = state
+        .component_map
+        .get(&vec![Component::SecretWall(None)])
+        .unwrap_or(&HashSet::new())
+        .clone();
 
     // dbg!(&state.component_map);
 
     // let entity_ids: Vec<usize> = state.entities_map.keys().cloned().collect();
     let directions: HashMap<Keycode, Position> = HashMap::from_iter(DIRECTIONS);
-    let other_positions = state.component_map[&vec![Component::Position(None)]]
+    let other_positions = state
+        .component_map
+        .get(&vec![Component::Position(None)])
+        .unwrap_or(&HashSet::new())
         .clone()
         .iter()
         .map(|e| {
@@ -48,7 +91,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
 
     // 'outer: loop {
     let keys: Vec<Keycode> = state.device_state.get_keys();
-    let mut pressed_key: Option<Keycode> = None;
+    // let mut pressed_key: Option<Keycode> = None;
     let key_map: HashMap<Keycode, char> = HashMap::from_iter([
         (Keycode::A, 'a'),
         (Keycode::B, 'b'),
@@ -79,47 +122,56 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
     ]);
 
     if keys.is_empty() {
-        state.last_pressed_key = None;
+        state.last_pressed_keys.clear();
     }
+    // if let Some(last_pressed_key) = &state.last_pressed_key {
+    //     if *last_pressed_key == HashSet::from_iter(keys.clone()) && !dialogue_entities.is_empty() {
+    //         // ignore if same key is pressed twice
+    //         return;
+    //     }
+    // }
+    // state.last_pressed_key = Some(HashSet::from_iter(keys.clone()));
+
     'outer: for key in keys.iter() {
-        if let Some(last_pressed_key) = state.last_pressed_key {
-            if last_pressed_key == *key && !dialogue_entities.is_empty() {
-                // ignore if same key is pressed twice
-                continue 'outer;
-            }
+        if state.last_pressed_keys.contains(key) && !dialogue_entities.is_empty() {
+            continue;
         }
+        state.last_pressed_keys.insert(*key);
 
-        pressed_key = Some(*key);
-        state.last_pressed_key = pressed_key;
+        // pressed_key = Some(*key);
 
-        for d in &dialogue_entities {
+        for (d, _) in &dialogue_entities {
             let (_, options) = get_component!(state.entities_map[d], Component::Dialogue).unwrap();
-            if options.is_empty() {
-                state.dialogue_input = "".to_string();
-                state.remove_entity(*d);
-                state.remove_all_by_component(Component::DialogueChar);
-            }
+            // if options.is_empty() {
+            //     state.dialogue_input = "".to_string();
+            //     state.remove_entity(*d);
+            //     state.remove_all_by_component(Component::DialogueChar);
+            // }
             match key {
                 Keycode::Enter => {
-                    let k: Option<(String, Event)> = {
+                    let k: Option<(String, &Event)> = {
                         let mut r = None;
-                        for (o, event) in options {
+                        for (o, event) in &options {
                             if o == "" {
                                 if state.dialogue_input.trim().is_empty() {
                                     break 'outer;
                                 }
                                 r = Some((state.dialogue_input.clone(), event));
-                            } else if state.dialogue_input == o {
+                            } else if state.dialogue_input == *o {
                                 r = Some((state.dialogue_input.clone(), event));
                             }
                         }
                         r
                     };
 
-                    if let Some((o, event)) = k {
+                    if options.is_empty() {
+                        state.dialogue_input = "".to_string();
+                        state.remove_entity(*d);
+                        state.remove_all_by_component(Component::DialogueChar);
+                    } else if let Some((o, event)) = k {
                         let event = match event {
                             Event::CreateName(None) => Event::CreateName(Some(o)),
-                            any => any,
+                            any => any.clone(),
                         };
                         state.events.push(event);
                         state.remove_entity(*d);
@@ -152,21 +204,27 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
             let entity = &e;
             let cooldown = get_component!(&state.entities_map[&e], Component::Cooldown).unwrap();
             if cooldown > 0 {
-                state
-                    .entities_map
-                    .get_mut(e)
-                    .unwrap()
-                    .set_component(Component::Cooldown(Some(cooldown - 1)));
+                state.set_component(*e, Component::Cooldown(Some(cooldown - 1)));
                 continue;
             }
-            state
-                .entities_map
-                .get_mut(e)
-                .unwrap()
-                .set_component(Component::Cooldown(Some(PLAYER_WALK_COOLDOWN)));
+            state.set_component(*e, Component::Cooldown(Some(PLAYER_WALK_COOLDOWN)));
 
             let position: Position =
                 get_component!(state.entities_map[entity], Component::Position).unwrap();
+
+            // match key {
+            //     Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
+            //         break;
+            //     }
+            //     _ => {
+            //         if let Some(last_pressed_key) = state.last_pressed_key {
+            //             if last_pressed_key == *key {
+            //                 // ignore if same key is pressed twice
+            //                 continue 'outer;
+            //             }
+            //         }
+            //     }
+            // }
             match key {
                 Keycode::R => {
                     state.events.push(Event::Refresh);
@@ -210,7 +268,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                                 .map(|s| s.to_uppercase())
                                 .collect();
 
-                            sleep(Duration::from_millis(100));
+                            // sleep(Duration::from_millis(100));
 
                             let (won, attempts, word) = play(
                                 tries,
@@ -306,11 +364,16 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                         // break;
                     }
 
-                    state
-                        .entities_map
-                        .get_mut(e)
-                        .unwrap()
-                        .set_component(Component::Position(Some(new_position.clone())));
+                    state.set_component(*e, Component::Position(Some(new_position.clone())));
+
+                    for s in &step_count_entities {
+                        // let e = state.entities_map[&s];
+                        let step_count =
+                            get_component!(state.entities_map[&s], Component::StepCount).unwrap();
+                        state.set_component(*s, Component::StepCount(Some(step_count + 1)));
+                    }
+                    step_count_entities.clear();
+                    // state.step_counter += 1;
                     // }
                 }
                 // Keycode::Space => {
@@ -319,6 +382,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                 _ => {}
             }
         }
+        break;
         // break 'outer;
     }
     // if pressed_key.is_none() {
@@ -326,6 +390,5 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
     //     // continue 'outer;
     // }
     // process::exit(code)
-    // sleep(Duration::from_millis(50));
     // }
 }

@@ -141,7 +141,8 @@ pub enum Component {
     Dialogue(Option<(String, Vec<(String, Event)>)>),
     DialogueChar,
     Activated(Option<bool>),
-    Cooldown(Option<usize>)
+    Cooldown(Option<usize>),
+    StepCount(Option<usize>),
 }
 
 // #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -180,5 +181,6 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::DialogueChar => Component::DialogueChar,
         Component::Activated(_) => Component::Activated(None),
         Component::Cooldown(_) => Component::Cooldown(None),
+        Component::StepCount(_) => Component::StepCount(None),
     }
 }

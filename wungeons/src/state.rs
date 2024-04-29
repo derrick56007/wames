@@ -7,7 +7,7 @@ use device_query::{DeviceState, Keycode};
 use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
-    components::{Component, Item, Position, Rect},
+    components::{get_default_component, Component, Item, Position, Rect},
     entity::Entity,
     event::Event,
     rooms::RoomType,
@@ -17,7 +17,7 @@ pub struct State {
     pub grid_size: Rect,
     pub events: Vec<Event>,
     pub change_events: Vec<Component>,
-    pub last_pressed_key: Option<Keycode>,
+    pub last_pressed_keys: HashSet<Keycode>,
     pub device_state: DeviceState,
     pub rng: ThreadRng,
     pub entity_id_counter: usize,
@@ -35,6 +35,7 @@ pub struct State {
     pub gold: usize,
     pub fog_enabled: bool,
     pub dialogue_input: String,
+    // pub step_counter: usize,
     // pub systems: Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>,
 }
 
@@ -45,7 +46,7 @@ impl State {
         let mut n = Self {
             grid_size,
             events: vec![],
-            last_pressed_key: None,
+            last_pressed_keys: HashSet::new(),
             device_state: DeviceState::new(),
             rng: rand::thread_rng(),
             entity_id_counter: 0,
@@ -57,6 +58,7 @@ impl State {
             hallways: Vec::new(),
             change_events: Vec::new(),
             letters_remaining: Vec::new(),
+            // step_counter: 0,
             // system_components: HashSet::new(),
             // systems: get_systems(),
             available_letters: HashSet::new(),
@@ -131,11 +133,25 @@ impl State {
         self.entities_map.remove(&id);
     }
 
+    pub fn set_component(&mut self, id: usize, component: Component) {
+        let e = &mut self.entities_map.get_mut(&id).unwrap();
+        if e.components[e.component_index[&get_default_component(&component)]] != component {
+            self.events.push(Event::ComponentChanged(component.clone()));
+        }
+
+        e.components[e.component_index[&get_default_component(&component)]] = component.clone();
+    }
+
+    // pub fn remove_component(&mut self, component: Component) {
+    //     let c = get_default_component(c);
+
+    // }
+
     pub fn remove_all_by_component(&mut self, component: Component) {
         let key = vec![component];
-        // if !self.component_map.contains_key(&key) {
-        //     return;
-        // }
+        if !self.component_map.contains_key(&key) {
+            return;
+        }
 
         let entities = self.component_map[&key].clone();
         for e in entities {

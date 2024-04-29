@@ -36,26 +36,14 @@ pub fn calculate_fog(state: &mut State, components: &[Component]) {
         if state.fog_enabled {
             match fog {
                 true => {
-                    state
-                        .entities_map
-                        .get_mut(f)
-                        .unwrap()
-                        .set_component(Component::Render(Some('░')));
+                    state.set_component(*f, Component::Render(Some('░')));
                 }
                 _ => {
-                    state
-                        .entities_map
-                        .get_mut(f)
-                        .unwrap()
-                        .set_component(Component::Render(Some(' ')));
+                    state.set_component(*f, Component::Render(Some(' ')));
                 }
             }
         } else {
-            state
-                .entities_map
-                .get_mut(f)
-                .unwrap()
-                .set_component(Component::Render(None));
+            state.set_component(*f, Component::Render(None));
         }
     }
     if !state.fog_enabled {
@@ -131,21 +119,13 @@ pub fn calculate_fog(state: &mut State, components: &[Component]) {
                     //     state.entities_map.get_mut(f).unwrap().set_component(Component::Render(Some('*')));
                     // },
                     false => {
-                        state
-                            .entities_map
-                            .get_mut(f)
-                            .unwrap()
-                            .set_component(Component::Fog(Some(true)));
+                        state.set_component(*f, Component::Fog(Some(true)));
                     }
                     _ => {} // components::FogState::Clear => {
 
                             // },
                 }
-                state
-                    .entities_map
-                    .get_mut(f)
-                    .unwrap()
-                    .set_component(Component::Render(None));
+                state.set_component(*f, Component::Render(None));
             } else {
             }
         }

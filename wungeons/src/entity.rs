@@ -43,10 +43,10 @@ impl Entity {
     pub fn contains_component(&self, component: &Component) -> bool {
         self.component_index.contains_key(component)
     }
-    pub fn set_component(&mut self, component: Component) {
-        self.components[self.component_index[&get_default_component(&component)]] =
-            component.clone();
-    }
+    // pub fn set_component(&mut self, component: Component) {
+    //     self.components[self.component_index[&get_default_component(&component)]] =
+    //         component.clone();
+    // }
     pub fn get_component(&self, component: Component) -> Option<Component> {
         if !self.component_index.contains_key(&component) {
             None
