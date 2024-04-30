@@ -76,7 +76,7 @@ pub fn get_item_description(
     }
 }
 
-pub fn use_item(item: &Item, state: &mut State) {
+pub fn use_item(item: &Item, _state: &mut State) {
     match item {
         Item::Key => {}
         Item::Glasses => {}

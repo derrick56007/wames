@@ -216,7 +216,7 @@ pub fn create_rooms(
         // if *last_room_type != &RoomType::Secret && *room_type != &RoomType::Secret {
 
         hallways.push((
-            last_center.clone(),
+            last_center,
             Position {
                 x: last_center.x,
                 y: center.y,
@@ -224,7 +224,7 @@ pub fn create_rooms(
         ));
 
         hallways.push((
-            center.clone(),
+            center,
             Position {
                 x: last_center.x,
                 y: center.y,
@@ -260,17 +260,17 @@ pub fn create_rooms(
             rect.width as f64,
             rect.height as f64,
         ) {
-            for line_pos in bresenham(&pos1, &pos2) {
+            for line_pos in bresenham(pos1, pos2) {
                 wall_positions.remove(&line_pos);
                 entities.push(create_floor(entity_id_counter, &line_pos));
                 entities.push(create_fog(entity_id_counter, &line_pos));
             }
         }
-        secret_hallways.push((pos1.clone(), pos2.clone()));
+        secret_hallways.push((*pos1, *pos2));
     }
 
     // dig out rooms
-    for (rect, pos, room_type) in final_rooms.iter() {
+    for (rect, pos, _room_type) in final_rooms.iter() {
         for x in pos.x + 1..pos.x + rect.width {
             for y in pos.y + 1..pos.y + rect.height {
                 wall_positions.remove(&Position { x, y });
@@ -484,7 +484,7 @@ pub fn create_rooms(
     let mut secret_wall_group: HashMap<Position, usize> = HashMap::new();
     for secrete_wall_pos in secret_hallway_positions.iter() {
         if secret_wall_group.is_empty() {
-            secret_wall_group.insert(secrete_wall_pos.clone(), 0);
+            secret_wall_group.insert(*secrete_wall_pos, 0);
             break;
         }
     }
@@ -495,12 +495,12 @@ pub fn create_rooms(
         let mut group = None;
 
         // 'outer:
-        for secrete_wall_pos in secret_hallway_positions.iter() {
+        for _secrete_wall_pos in secret_hallway_positions.iter() {
             for secrete_wall_pos in secret_hallway_positions.iter() {
                 for (_, d) in DIRECTIONS {
                     if secret_wall_group.contains_key(&(secrete_wall_pos + &d)) {
                         group = Some(secret_wall_group[&(secrete_wall_pos + &d)]);
-                        secret_wall_group.insert(secrete_wall_pos.clone(), group.unwrap());
+                        secret_wall_group.insert(*secrete_wall_pos, group.unwrap());
                         // secret_wall_group.insert(secrete_wall_pos + &d, group.unwrap());
                         // break 'outer;
                     }
@@ -547,7 +547,7 @@ pub fn create_rooms(
         if secret_wall_group.contains_key(secrete_wall_pos) {
             continue;
         }
-        secret_wall_group.insert(secrete_wall_pos.clone(), group.unwrap());
+        secret_wall_group.insert(*secrete_wall_pos, group.unwrap());
     }
     for secret_wall_pos in secret_hallway_positions.iter() {
         entities.push(create_secret_wall(
@@ -591,7 +591,7 @@ pub fn create_rooms(
                         width: f.0.width,
                         height: f.0.height,
                     },
-                    f.1.clone(),
+                    *f.1,
                     f.2.to_owned(),
                 )
             })

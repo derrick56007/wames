@@ -1,28 +1,22 @@
 use std::{
-    collections::{HashMap, HashSet},
-    io::BufRead,
-    process,
-    thread::sleep,
-    time::{Duration, SystemTime},
+    collections::{HashSet},
 };
 
-use components::{ Position, DIRECTIONS};
+use components::{ Position};
 // use device_query::{DeviceQuery, Keycode};
-use entity::new_entity;
+
 use event::Event;
 
 use render::bresenham;
 // use rooms::{create_floor, create_item};
-use wurdle::{play, wurdle_words};
+
 
 use crate::{
-    components::{self, Component, Rect},
-    create::{BG_COLOR, BLACK},
-    entity::{self, add_entity},
+    components::{self, Component},
+    create::{BLACK},
+    entity::{self},
     event, get_component,
-    inputs::handle_inputs,
     render,
-    rooms::{self, create_rooms},
     state::State,
 };
 
@@ -164,7 +158,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
                         get_component!(state.entities_map[&viewer], Component::Viewable).unwrap();
                     if !viewable_viewed_by.contains(&viewer) {
                         state.events.push(Event::View((
-                            (viewer.clone(), viewer_type.clone()),
+                            (viewer, viewer_type.clone()),
                             (*viewable, viewable_type.clone()),
                         )));
                         viewable_viewed_by.push(viewer);
@@ -210,8 +204,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
                                 // },
                     }
                     state.set_component(*f, Component::Render(None));
-                } else {
-                }
+                } 
             }
         }
     }

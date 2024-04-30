@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, HashSet},
-    io::{stdout, Write},
     process,
     thread::sleep,
     time::Duration,
@@ -13,7 +12,7 @@ use wurdle::{play, wurdle_words};
 use crate::{
     components::{Component, Position, DIRECTIONS},
     create::{
-        create_dialogue, create_floor, create_fog, create_item, create_revealed_floor,
+        create_dialogue, create_fog, create_item, create_revealed_floor,
         PLAYER_WALK_COOLDOWN,
     },
     entity::add_entity,
@@ -168,7 +167,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
 
     // pressed_key = Some(*key);
 
-    if let Some((d, _)) = dialogue_entities.iter().next() {
+    if let Some((d, _)) = dialogue_entities.first() {
         let (_, options) = get_component!(state.entities_map[d], Component::Dialogue).unwrap();
         if options.is_empty() {
             state.dialogue_input = "".to_string();
@@ -181,7 +180,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
                 let k: Option<(String, &Event)> = {
                     let mut r = None;
                     for (o, event) in &options {
-                        if o == "" {
+                        if o.is_empty() {
                             match event {
                                 Event::CreateName(_) => {
                                     if state.dialogue_input.trim().is_empty() {
@@ -226,7 +225,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
             }
             _ => {
                 if key_map.contains_key(key) {
-                    let mut st = key_map[key].to_string();
+                    let st = key_map[key].to_string();
                     // if keys.contains(&KeyCode::ShiftLeft) || keys.contains(&KeyCode::ShiftRight) {
                     //     st = st.to_uppercase().to_string();
                     // }
@@ -317,7 +316,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
 
                         sleep(Duration::from_millis(100));
 
-                        let (won, attempts, word) = play(
+                        let (won, attempts, _word) = play(
                             tries,
                             HashSet::from_iter(state.available_letters.clone()),
                             words_vec,
@@ -453,7 +452,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
                     // break;
                 }
 
-                state.set_component(*e, Component::Position(Some(new_position.clone())));
+                state.set_component(*e, Component::Position(Some(new_position)));
 
                 for s in &step_count_entities {
                     // let e = state.entities_map[&s];

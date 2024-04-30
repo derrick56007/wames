@@ -69,7 +69,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
         x = 0;
 
         for (i, (o, _)) in dialogue.1.iter().enumerate() {
-            if o == "" {
+            if o.is_empty() {
                 continue;
             }
             // y += 1;

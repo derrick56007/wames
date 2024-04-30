@@ -1,14 +1,10 @@
-use std::process;
+
 
 use crate::{
-    components::{Component, Position},
+    components::{Component},
     dialogue::dialogue,
-    entity::{add_entity, new_entity},
     event::{game_events, Event},
     sight::sight,
-    get_component,
-    inputs::handle_inputs,
-    render,
     state::State,
 };
 
@@ -65,4 +61,4 @@ pub fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)
     ]
 }
 
-fn dummy(state: &mut State, components: &[Component]) {}
+fn dummy(_state: &mut State, _components: &[Component]) {}

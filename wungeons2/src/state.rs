@@ -5,7 +5,7 @@ use std::{
 
 // use device_query::{DeviceState, Keycode};
 use rand::{rngs::ThreadRng, Rng};
-use winit::keyboard::KeyCode;
+
 
 use crate::{
     components::{get_default_component, Component,  Position, Rect}, entity::Entity, event::Event, items::Item, rooms::RoomType
@@ -81,14 +81,14 @@ impl State {
     }
 
     pub fn refresh(&mut self) {
-        let mut available_letters: HashSet<char> =
+        let available_letters: HashSet<char> =
             HashSet::from_iter("aerotlisncuyd".to_uppercase().chars());
         let mut letters_remaining = "abcdefghijklmnopqrstuvwxyz".to_uppercase().to_string();
         // let starting_letters_count = 10;
         for c in &available_letters {
             letters_remaining = letters_remaining.replace(*c, "");
         }
-        let mut letters_remaining = letters_remaining.chars().collect::<Vec<char>>();
+        let letters_remaining = letters_remaining.chars().collect::<Vec<char>>();
 
         // while available_letters.len() < starting_letters_count {
         //     let new_letter = letters_remaining[self.rng.gen::<usize>() % letters_remaining.len()];
@@ -103,7 +103,7 @@ impl State {
     }
 
     pub fn get_entities(&self, components: &[Component]) -> &HashSet<usize> {
-        &self.component_map.get(components).unwrap_or(&self.empty_entites_set)
+        self.component_map.get(components).unwrap_or(&self.empty_entites_set)
     }
 
     pub fn get_unchosen_letters_if_possible(&mut self, n: usize) -> Vec<char> {

@@ -1,4 +1,4 @@
-use std::process;
+
 
 // use colored::Colorize;
 // use device_query::{DeviceQuery, Keycode};
@@ -38,7 +38,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
     loop {
         if let Some(event) = state.events.pop() {
             match event {
-                Event::BuyItem((e, item, cost, player)) => {
+                Event::BuyItem((e, item, cost, _player)) => {
                     if state.gold >= cost {
                         state.items.push(item.clone());
                         state.remove_entity(e);
@@ -82,18 +82,18 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                         )
                     }
                 }
-                Event::View(((a, ViewType::Player), (b, ViewType::Minion))) => {
+                Event::View(((_a, ViewType::Player), (_b, ViewType::Minion))) => {
                     add_entity(
                         create_dialogue(
                             &mut state.entity_id_counter,
-                            vec![(format!("You see a minion"), None)],
+                            vec![("You see a minion".to_string(), None)],
                             vec![],
                             Position::ZERO,
                         ),
                         state,
                     );
                 }
-                Event::View(((a, ViewType::Player), (b, ViewType::SecretWall))) => {
+                Event::View(((_a, ViewType::Player), (_b, ViewType::SecretWall))) => {
                     if seen_wall_hint {
                         continue;
                     }
@@ -101,7 +101,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     add_entity(
                         create_dialogue(
                             &mut state.entity_id_counter,
-                            vec![(format!("You see a crack in the wall"), None)],
+                            vec![("You see a crack in the wall".to_string(), None)],
                             vec![],
                             Position::ZERO,
                         ),
@@ -248,7 +248,6 @@ pub fn random_name(rng: &mut ThreadRng) -> String {
     // 	pair[1] = consonants.charAt(gen.nextInt(consonants.length()));
     // }
     let pairs = (0..length)
-        .into_iter()
         .map(|_| {
             (
                 vowels[rng.gen_range(0..vowels.len())],
@@ -272,8 +271,7 @@ pub fn random_name(rng: &mut ThreadRng) -> String {
     if rng.gen_bool(0.5) {
         if vowels
             .iter()
-            .position(|n| *n == name[name.len() - 1])
-            .is_some()
+            .any(|n| *n == name[name.len() - 1])
         {
             name.push(consonants[rng.gen_range(0..consonants.len())]);
         } else {

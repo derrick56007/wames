@@ -1,8 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    io::{stdout, Write},
-    iter::zip,
-};
+
 
 use crate::{
     components::{Component, Position},
@@ -53,15 +49,14 @@ const COLORS: [(&str, &str); 17] = [
 // }
 // use colored::*;
 use glyphon::{
-    Attrs, Buffer, Color, Family, FontSystem, Metrics, Shaping, SwashCache, TextArea, TextAtlas,
-    TextBounds,
+    Attrs, Buffer, Family, FontSystem, Metrics, Shaping,
 };
 // use colored::Colorize;
 
 pub fn render(
-    width: i32,
-    height: i32,
-    mut font_system: &mut FontSystem,
+    _width: i32,
+    _height: i32,
+    font_system: &mut FontSystem,
     scale_factor: f64,
     state: &mut State,
     components: &[Component],
@@ -89,8 +84,8 @@ pub fn render(
     // entities.reverse();
     // let mut visited_positions = HashSet::<Position>::new();
 
-    let physical_width = (TILE_WIDTH as f64 * scale_factor) as f32;
-    let physical_height = (TILE_HEIGHT as f64 * scale_factor) as f32;
+    let _physical_width = (TILE_WIDTH as f64 * scale_factor) as f32;
+    let _physical_height = (TILE_HEIGHT as f64 * scale_factor) as f32;
     for (e, _) in entities.iter() {
         let entity = &e;
 
@@ -175,7 +170,7 @@ pub fn render(
     }
 
     if state.show_deck {
-        let mut additional_post: Vec<String> = vec![
+        let additional_post: Vec<String> = vec![
             "┏━━━━━━━━━━━━━┓".into(),
             format!("┃ Words: {: >4} ┃", 5),
             format!("┃ Gold : {: >4} ┃", state.gold),
@@ -188,7 +183,7 @@ pub fn render(
             buffers.push((
                 create_buffer(line.to_string(), font_system),
                 Position {
-                    x: state.grid_size.width as isize,
+                    x: state.grid_size.width,
                     y: i as isize,
                 },
                 WHITE,
@@ -398,15 +393,15 @@ pub fn bresenham(pos0: &Position, pos1: &Position) -> Vec<Position> {
 
 pub fn create_buffer(text: String, mut font_system: &mut FontSystem) -> Buffer {
     let mut buffer = Buffer::new(
-        &mut font_system,
+        font_system,
         Metrics::new(TILE_HEIGHT as f32, TILE_HEIGHT as f32),
     );
 
     let physical_width = (TILE_WIDTH as f64) as f32;
     let physical_height = (TILE_HEIGHT as f64) as f32;
-    buffer.set_size(&mut font_system, physical_width * text.len() as f32, physical_height);
+    buffer.set_size(font_system, physical_width * text.len() as f32, physical_height);
     buffer.set_text(
-        &mut font_system,
+        font_system,
         &text,
         Attrs::new().family(Family::Monospace),
         Shaping::Advanced,

@@ -1,9 +1,9 @@
 use glyphon::{
-    Attrs, Buffer, Color, Family, FontSystem, Metrics, Resolution, Shaping, SwashCache, TextArea,
+    Color, FontSystem, Resolution, SwashCache, TextArea,
     TextAtlas, TextBounds, TextRenderer,
 };
 use wgpu::{
-    util::DeviceExt, CommandEncoderDescriptor, CompositeAlphaMode, DeviceDescriptor, Features,
+    CommandEncoderDescriptor, CompositeAlphaMode, DeviceDescriptor, Features,
     Instance, InstanceDescriptor, Limits, LoadOp, MultisampleState, Operations, PresentMode,
     RenderPassColorAttachment, RenderPassDescriptor, RequestAdapterOptions, SurfaceConfiguration,
     TextureFormat, TextureUsages, TextureViewDescriptor,
@@ -13,12 +13,11 @@ use winit::{
     event::{ElementState, Event, KeyEvent, WindowEvent},
     event_loop::EventLoop,
     keyboard::PhysicalKey,
-    platform::run_on_demand::EventLoopExtRunOnDemand,
     window::WindowBuilder,
 };
 
 
-use std::{mem, sync::Arc};
+use std::{sync::Arc};
 
 use game_loop::game_loop;
 
@@ -27,7 +26,7 @@ use game_loop::game_loop;
 
 // use game_loop::winit::event::{Event, WindowEvent};
 // use game_loop::winit::event_loop::EventLoop;
-use game_loop::winit::window::Window;
+
 // use std::sync::Arc;
 
 const TILE_WIDTH: isize = 18;
@@ -69,7 +68,7 @@ async fn run() {
         .create_surface(window.clone())
         .expect("Create surface");
     let swapchain_format = TextureFormat::Bgra8UnormSrgb;
-    let mut config = SurfaceConfiguration {
+    let config = SurfaceConfiguration {
         usage: TextureUsages::RENDER_ATTACHMENT,
         format: swapchain_format,
         width: size.width,
@@ -157,7 +156,7 @@ async fn run() {
             let text_areas = buffers
                 .iter()
                 .map(|(buffer, position, color)| TextArea {
-                    buffer: buffer,
+                    buffer,
                     left: (position.x * TILE_WIDTH) as f32,
                     top: (position.y * TILE_HEIGHT) as f32,
                     scale: 1.0,
@@ -265,16 +264,16 @@ async fn run() {
         |g, event| match event {
             Event::WindowEvent { event, .. } => match event {
                 WindowEvent::KeyboardInput {
-                    device_id,
+                    device_id: _,
                     event,
-                    is_synthetic,
+                    is_synthetic: _,
                 } => {
                     match event {
                         KeyEvent {
                             physical_key,
-                            logical_key,
-                            text,
-                            location,
+                            
+                            
+                            
                             state,
                             // repeat: false,
                             ..
@@ -304,7 +303,7 @@ async fn run() {
                     // );
                     // window.request_redraw();
                 }
-                WindowEvent::Resized(size) => {
+                WindowEvent::Resized(_size) => {
                     // config.width = size.width;
                     // config.height = size.height;
                     // surface.configure(&device, &config);
@@ -391,8 +390,8 @@ impl Game {
             height: 3,
         };
 
-        let mut systems = get_systems();
-        let mut state = State::new(
+        let systems = get_systems();
+        let state = State::new(
             GRID_SIZE,
             systems
                 .iter()
@@ -427,30 +426,21 @@ fn main() {
 }
 
 use std::{
-    collections::{HashMap, HashSet},
-    env,
-    io::BufRead,
-    process,
-    thread::sleep,
-    time::{Duration, SystemTime},
+    time::{SystemTime},
 };
 
-use components::{Position, DIRECTIONS};
+
 // use device_query::{DeviceQuery, Keycode};
-use entity::new_entity;
+
 // use event::Event;
 
-use render::bresenham;
+
 // use rooms::{create_floor, create_item};
 // use wurdle::{play, wurdle_words};
 
 use crate::{
     components::{Component, Rect},
-    entity::add_entity,
-    event::game_events,
     inputs::handle_inputs,
-    rooms::create_rooms,
-    sight::sight,
     state::State,
     systems::get_systems,
 };
