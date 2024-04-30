@@ -4,6 +4,7 @@ members = [
     "template",
     "wetris", "winput", "woker", 
     "wungeons",
+    "wungeons2",
     "wurdle", "wursive",
 ]
 resolver = "2"
