@@ -32,9 +32,15 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
         let pos = get_component!(state.entities_map[e], Component::Position).unwrap();
 
         // let y = 0;
-        let mut count = 0;
+        let mut x = 0;
+        let mut y = 0;
         for (line, color) in dialogue.0 {
             for c in line.chars() {
+                if c == '\n' {
+                    x = 0;
+                    y += 1;
+                    continue;
+                }
                 let render_c = match color {
                     Some((Some(color), None)) => Component::Render(Some((c, Some(color), None))),
                     Some((None, Some(color))) => Component::Render(Some((c, None, Some(color)))),
@@ -46,8 +52,8 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                         &mut state.entity_id_counter,
                         vec![
                             Component::Position(Some(Position {
-                                x: pos.x + count,
-                                y: pos.y,
+                                x: pos.x + x,
+                                y: pos.y + y,
                             })),
                             Component::ZIndex(Some(*z)),
                             render_c,
@@ -56,7 +62,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                     ),
                     state,
                 );
-                count += 1;
+                x += 1;
             }
         }
         state.set_component(*e, Component::Activated(Some(true)));

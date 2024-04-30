@@ -55,7 +55,7 @@ pub fn render(state: &mut State, components: &[Component]) {
     let mut buffer: Vec<String> = " "
         .repeat(state.grid_size.area() as usize)
         .chars()
-        .map(|c|c.to_string())
+        .map(|c| c.to_string())
         .collect();
 
     let mut entities = entities
@@ -81,7 +81,9 @@ pub fn render(state: &mut State, components: &[Component]) {
         // visited_positions.insert(position.clone());
         let idx = state.grid_size.width * position.y + position.x;
 
-        if let Some((render_char, bg_color, fg_color)) = get_component!(state.entities_map[entity], Component::Render) {
+        if let Some((render_char, bg_color, fg_color)) =
+            get_component!(state.entities_map[entity], Component::Render)
+        {
             let mut res = render_char.to_string();
             if let Some((r, g, b)) = fg_color {
                 res = res.custom_color(CustomColor { r, g, b }).to_string();
@@ -89,14 +91,66 @@ pub fn render(state: &mut State, components: &[Component]) {
             if let Some((r, g, b)) = bg_color {
                 res = res.on_custom_color(CustomColor { r, g, b }).to_string();
             }
-            if idx >=0 {
+            if idx >= 0 {
                 buffer[idx as usize] = res;
             }
         }
-
     }
-    for i in (0..state.grid_size.height).rev() {
-        buffer.insert((i * state.grid_size.width) as usize, "\n".to_string());
+    let left_side_width = 20;
+
+    let mut additional_pre: Vec<String> = vec![" ".repeat(left_side_width), "Hands: 1".into()];
+    let mut additional_post: Vec<String> = vec!["┏━━━━┓".to_string()];
+    let mut freq = HashMap::<char, usize>::new();
+    for l in "ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars() {
+        if !freq.contains_key(&l) {
+            freq.insert(l, 0);
+        }
+        if !state.available_letters.contains(&l) {
+            continue;
+        }
+        freq.insert(l, freq[&l] + 1);
+    }
+    for l in "ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars() {
+        // if !freq.contains_key(&l) {
+        //     continue;
+        // }
+        additional_post.push(format!("┃{} x{}┃", l, freq[&l]))
+    }
+    additional_post.push("┗━━━━┛".into());
+
+    if !state.show_deck {
+        additional_post.clear();
+    }
+
+    for i in (0..state.grid_size.height as usize).rev() {
+        // let p = if i < additional_pre.len() {
+        //     if i == 0 {
+        //         "".into()
+        //     } else {
+
+        //         format!(
+        //             "{}{}",
+        //             additional_pre[i],
+        //             " ".repeat(left_side_width - additional_pre[i].len())
+        //         )
+        //     }
+        // } else {
+        //     " ".repeat(left_side_width)
+        // };
+
+        // buffer.insert(
+        //     (i) * state.grid_size.width as usize,
+        //     p.to_string(),
+        // );
+
+        buffer.insert(i * state.grid_size.width as usize, "\n".to_string());
+
+        if i < additional_post.len() {
+            buffer.insert(
+                (i + 2) * state.grid_size.width as usize,
+                additional_post[i].to_string(),
+            );
+        }
     }
     print!("{}[2J", 27 as char);
 
@@ -161,33 +215,32 @@ pub fn render(state: &mut State, components: &[Component]) {
     available_letters.sort();
     // const LETTERS: &str = "Q W E R T Y U I O P\n A S D F G H J K L\n  Z X C V B N M";
 
-    
-    print!(
-        "\n+[ {} ]\n-[ {} ]\n{}g {:?}\n{}", //{:?}",
-        available_letters
-            .iter()
-            .map(|c| c.to_string())
-            .collect::<Vec<String>>()
-            .join(", "),
-        state
-            .letters_remaining
-            .iter()
-            .map(|c| c.to_string())
-            .collect::<Vec<String>>()
-            .join(", "),
-        state.gold, // SystemTime::now(),
-        state.items,
-        state.dialogue_input
-    );
-    // println!("");
+    // print!(
+    //     "\n+[ {} ]\n-[ {} ]\n{}g {:?}\n{}", //{:?}",
+    //     available_letters
+    //         .iter()
+    //         .map(|c| c.to_string())
+    //         .collect::<Vec<String>>()
+    //         .join(", "),
+    //     state
+    //         .letters_remaining
+    //         .iter()
+    //         .map(|c| c.to_string())
+    //         .collect::<Vec<String>>()
+    //         .join(", "),
+    //     state.gold, // SystemTime::now(),
+    //     state.items,
+    //     state.dialogue_input
+    // );
+
+    print!("\n{}", state.dialogue_input);
     // for c in LETTERS.chars() {
     //     print!(
     //         "{}",
     //         colorize(
     //             c.into(),
     //             if c == ' ' || state.letters_remaining.contains(&c)
-                    
-                    
+
     //             {
     //                 "reset"
     //             } else {

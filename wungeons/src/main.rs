@@ -34,7 +34,7 @@ fn main() {
 
     const GRID_SIZE: Rect = Rect {
         width: 70,
-        height: 20,
+        height: 3,
     };
 
     let mut systems = get_systems();

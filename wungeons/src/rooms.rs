@@ -11,7 +11,7 @@ use crate::{
         DIRECTIONS,
     },
     create::{
-        create_door, create_floor, create_fog, create_item, create_minion, create_secret_wall, create_secret_wall_hint, create_wall
+        create_door, create_floor, create_fog, create_item, create_minion, create_secret_wall, create_secret_wall_hint, create_wall, GOLD
     },
     entity::{new_entity, Entity},
     render::bresenham,
@@ -194,6 +194,7 @@ pub fn create_rooms(
     for i in 0..len {
         if final_rooms[i].2 == &RoomType::Regular {
             final_rooms[len - 1].2 = &RoomType::Secret;
+
             break;
         }
     }
@@ -225,7 +226,7 @@ pub fn create_rooms(
         // }
     }
     let mut wall_positions: HashSet<Position> = HashSet::new();
-    let mut secret_wall_positions: HashSet<Position> = HashSet::new();
+    let mut secret_hallway_positions: HashSet<Position> = HashSet::new();
 
     let mut fog_positions: HashSet<Position> = HashSet::new();
 
@@ -271,14 +272,14 @@ pub fn create_rooms(
             }
         }
 
-        
+
     }
 
     for (pos1, pos2) in secret_hallways {
         for line_pos in bresenham(&pos1, &pos2) {
             if wall_positions.contains(&line_pos) {
                 wall_positions.remove(&line_pos);
-                secret_wall_positions.insert(line_pos);
+                secret_hallway_positions.insert(line_pos);
             }
         }
     }
@@ -322,6 +323,27 @@ pub fn create_rooms(
                 },
             ));
         } else if room_type == RoomType::Secret {
+            for (_, d) in DIAGONAL_DIRECTIONS {
+                entities.push(new_entity(entity_id_counter, vec![
+                    Component::Position(Some(rect.center(pos) + &d)),
+                    Component::Render(Some((' ', Some(GOLD),None))),
+                    Component::ZIndex(Some(4)),
+                ]));
+
+            }
+
+            for (_, d) in DIRECTIONS {
+                entities.push(new_entity(entity_id_counter, vec![
+                    Component::Position(Some(rect.center(pos) + &d)),
+                    Component::Render(Some((' ', Some(GOLD),None))),
+                    Component::ZIndex(Some(4)),
+                ]));
+            }
+            entities.push(new_entity(entity_id_counter, vec![
+                Component::Position(Some(rect.center(pos))),
+                Component::Render(Some((' ', Some(GOLD),None))),
+                Component::ZIndex(Some(3)),
+            ]));
             entities.push(create_item(entity_id_counter, &rect.center(pos), Item::Key))
         }
     }
@@ -387,21 +409,21 @@ pub fn create_rooms(
     }
 
     let mut secret_wall_group: HashMap<Position, usize> = HashMap::new();
-    for secrete_wall_pos in secret_wall_positions.iter() {
+    for secrete_wall_pos in secret_hallway_positions.iter() {
         if secret_wall_group.is_empty() {
             secret_wall_group.insert(secrete_wall_pos.clone(), 0);
             break;
         }
     }
-    for secrete_wall_pos in secret_wall_positions.iter() {
+    for secrete_wall_pos in secret_hallway_positions.iter() {
         if secret_wall_group.contains_key(secrete_wall_pos) {
             continue;
         }
         let mut group = None;
 
         // 'outer:
-        for secrete_wall_pos in secret_wall_positions.iter() {
-            for secrete_wall_pos in secret_wall_positions.iter() {
+        for secrete_wall_pos in secret_hallway_positions.iter() {
+            for secrete_wall_pos in secret_hallway_positions.iter() {
                 for (_, d) in DIRECTIONS {
                     if secret_wall_group.contains_key(&(secrete_wall_pos + &d)) {
                         group = Some(secret_wall_group[&(secrete_wall_pos + &d)]);
@@ -454,7 +476,7 @@ pub fn create_rooms(
         }
         secret_wall_group.insert(secrete_wall_pos.clone(), group.unwrap());
     }
-    for secret_wall_pos in secret_wall_positions.iter() {
+    for secret_wall_pos in secret_hallway_positions.iter() {
         entities.push(create_secret_wall(
             entity_id_counter,
             secret_wall_pos,
@@ -467,7 +489,7 @@ pub fn create_rooms(
         ));
         for (_, d) in DIRECTIONS {
             let new_pos = d + secret_wall_pos;
-            if !wall_positions.contains(&new_pos) && !secret_wall_positions.contains(&new_pos) {
+            if !wall_positions.contains(&new_pos) && !secret_hallway_positions.contains(&new_pos) {
                 entities.push(create_secret_wall_hint(entity_id_counter, &new_pos));
             }
         }

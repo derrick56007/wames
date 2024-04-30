@@ -67,15 +67,15 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                             // dbg!(count);
                             // process::exit(0);
                             if count == 5 {
-                                add_entity(
-                                    create_dialogue(
-                                        &mut state.entity_id_counter,
-                                        vec![("Step 5!".to_string(), None)],
-                                        vec![],
-                                        Position::ZERO,
-                                    ),
-                                    state,
-                                );
+                                // add_entity(
+                                //     create_dialogue(
+                                //         &mut state.entity_id_counter,
+                                //         vec![("Step 5!".to_string(), None)],
+                                //         vec![],
+                                //         Position::ZERO,
+                                //     ),
+                                //     state,
+                                // );
                             }
                         }
                         // Component::Minion(_) => todo!(),
@@ -112,7 +112,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                             vec![
                                 ("Welcome to ".to_string(), None),
                                 ("WUNGEON".to_string(), Some((None, Some((255, 0, 0))))),
-                                ("!".to_string(), None),
+                                ("!\n\n(press any key to continue)".to_string(), None),
                             ],
                             vec![],
                             Position::ZERO,
@@ -123,7 +123,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     add_entity(
                         create_dialogue(
                             &mut state.entity_id_counter,
-                            vec![("What is your name?".to_string(), None)],
+                            vec![("What is your name?\n\n(submit your name or press enter to be named)".to_string(), None)],
                             vec![("".to_string(), Event::CreateName(None))],
                             Position::ZERO,
                         ),
@@ -139,7 +139,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     for id in entity_ids {
                         state.remove_entity(id);
                     }
-
+                    state.grid_size.height = 30;
                     state.rooms.clear();
                     state.hallways.clear();
                     let (rooms, room_entities, hallways) = create_rooms(state);

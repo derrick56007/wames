@@ -65,7 +65,7 @@ pub fn create_fog(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity 
             // Component::Wall,
             Component::Position(Some(wall_pos.clone())),
             Component::Render(Some((' ', None, None))),
-            Component::ZIndex(Some(3)),
+            Component::ZIndex(Some(5)),
             Component::Fog(Some(false)),
         ],
     )
@@ -79,6 +79,19 @@ pub fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entit
             Component::Position(Some(wall_pos.clone())),
             Component::Render(Some((' ', Some(BG_COLOR), None))),
             Component::ZIndex(Some(0)),
+            // Component::Fog(Some(FogState::Dark))
+        ],
+    )
+}
+
+pub fn create_revealed_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
+    new_entity(
+        entity_id_counter,
+        vec![
+            // Component::Wall,
+            Component::Position(Some(wall_pos.clone())),
+            Component::Render(Some((' ', Some(REVEALED_BG_COLOR), None))),
+            Component::ZIndex(Some(1)),
             // Component::Fog(Some(FogState::Dark))
         ],
     )
@@ -111,7 +124,7 @@ pub fn create_minion(
         Component::Render(Some((looks, None, Some(WHITE)))),
         Component::ZIndex(Some(1)),
         Component::Viewable(Some((ViewType::Minion, vec![]))),
-        Component::ViewDistance(Some(PLAYER_VIEW_DISTANCE - 1)),
+        Component::ViewDistance(Some(PLAYER_VIEW_DISTANCE - 2)),
     ];
 
     if spawn_key {
@@ -126,7 +139,7 @@ pub fn create_item(entity_id_counter: &mut usize, pos: &Position, item: Item) ->
         vec![
             Component::Position(Some(pos.clone())),
             Component::Render(Some((get_item_char(&item), None, Some(WHITE)))),
-            Component::ZIndex(Some(1)),
+            Component::ZIndex(Some(4)),
             Component::Item(Some(item)),
         ],
     )
@@ -134,9 +147,13 @@ pub fn create_item(entity_id_counter: &mut usize, pos: &Position, item: Item) ->
 
 pub const PLAYER_WALK_COOLDOWN: usize = 6;
 pub const PLAYER_VIEW_DISTANCE: usize = 9;
-pub const BG_COLOR: (u8, u8, u8) = (128, 128, 128);
+pub const BG_COLOR: (u8, u8, u8) 
+= (78,54,42);
+pub const REVEALED_BG_COLOR: (u8, u8, u8) 
+= (61,43,31);
 pub const WHITE: (u8, u8, u8) = (255, 255, 255);
 pub const BLACK: (u8, u8, u8) = (0, 0, 0);
+pub const GOLD: (u8, u8, u8) = (218, 145, 1);
 
 pub fn create_player(entity_id_counter: &mut usize, pos: Position) -> Entity {
     new_entity(

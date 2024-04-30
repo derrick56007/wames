@@ -1,15 +1,17 @@
 use std::{
-    collections::{HashMap, HashSet},
-    process,
-    thread::sleep,
-    time::Duration,
+    collections::{HashMap, HashSet}, io::{stdout, Write}, process, thread::sleep, time::Duration
 };
 
 use device_query::{DeviceQuery, Keycode};
 use wurdle::{play, wurdle_words};
 
 use crate::{
-    components::{Component, Item, Position, DIRECTIONS}, create::{create_floor, create_fog, create_item, PLAYER_WALK_COOLDOWN}, entity::add_entity, event::Event, get_component, state::State
+    components::{Component, Item, Position, DIRECTIONS},
+    create::{create_floor, create_fog, create_item, create_revealed_floor, PLAYER_WALK_COOLDOWN},
+    entity::add_entity,
+    event::Event,
+    get_component,
+    state::State,
 };
 
 pub fn handle_inputs(state: &mut State, components: &[Component]) {
@@ -126,7 +128,10 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
     //     }
     // }
     // state.last_pressed_key = Some(HashSet::from_iter(keys.clone()));
-
+        // if dialogue_entities.is_empty() {
+        //     print!("\\e[?25l");
+        //     stdout().flush().unwrap();
+        // }
     'outer: for key in keys.iter() {
         // if *key == Keycode::F {
 
@@ -135,13 +140,9 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
         // }
         if state.last_pressed_keys.contains(key) && !dialogue_entities.is_empty() {
             continue;
-        }
-        else if state.last_pressed_keys.contains(key) {
+        } else if state.last_pressed_keys.contains(key) {
             match key {
-
-                Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
-
-                }
+                Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {}
                 _ => {
                     continue;
                 }
@@ -164,6 +165,14 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                         let mut r = None;
                         for (o, event) in &options {
                             if o == "" {
+                                match event {
+                                    Event::CreateName(_) => {
+                                        if state.dialogue_input.trim().is_empty() {
+                                            state.dialogue_input = "thorin".to_string();
+                                        }
+                                    }
+                                    _ => {}
+                                }
                                 if state.dialogue_input.trim().is_empty() {
                                     break 'outer;
                                 }
@@ -220,7 +229,6 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
             let position: Position =
                 get_component!(state.entities_map[entity], Component::Position).unwrap();
 
-            
             // match key {
             //      => {
             //         // break;
@@ -238,6 +246,9 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                 }
                 Keycode::F => {
                     state.fog_enabled = !state.fog_enabled;
+                }
+                Keycode::D => {
+                    state.show_deck = !state.show_deck;
                 }
                 Keycode::Up | Keycode::Right | Keycode::Left | Keycode::Down => {
                     if cooldown > 0 {
@@ -282,7 +293,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
 
                             let (won, attempts, word) = play(
                                 tries,
-                                state.available_letters.clone(),
+                                HashSet::from_iter(state.available_letters.clone()),
                                 words_vec,
                                 Some(letter),
                                 false,
@@ -361,7 +372,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                                 if groupb == group {
                                     state.remove_entity(*e);
                                     add_entity(
-                                        create_floor(&mut state.entity_id_counter, &pos),
+                                        create_revealed_floor(&mut state.entity_id_counter, &pos),
                                         state,
                                     );
                                     add_entity(

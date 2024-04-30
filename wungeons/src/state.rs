@@ -28,7 +28,7 @@ pub struct State {
     pub system_components: Vec<Vec<Component>>,
     pub rooms: Vec<(Rect, Position, RoomType)>,
     pub hallways: Vec<(Position, Position)>,
-    pub available_letters: HashSet<char>,
+    pub available_letters: Vec<char>,
     pub full_loop_duration: Option<Duration>,
     pub letters_remaining: Vec<char>,
     pub items: Vec<Item>,
@@ -36,6 +36,7 @@ pub struct State {
     pub fog_enabled: bool,
     pub dialogue_input: String,
     empty_entites_set: HashSet<usize>,
+    pub show_deck: bool,
     // pub step_counter: usize,
     // pub systems: Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>,
 }
@@ -45,6 +46,7 @@ impl State {
         // let mut rng = ;
 
         let mut n = Self {
+            show_deck: false,
             grid_size,
             events: vec![],
             last_pressed_keys: HashSet::new(),
@@ -62,7 +64,7 @@ impl State {
             // step_counter: 0,
             // system_components: HashSet::new(),
             // systems: get_systems(),
-            available_letters: HashSet::new(),
+            available_letters: Vec::new(),
             full_loop_duration: None,
             items: Vec::new(),
             gold: 0,
@@ -93,7 +95,7 @@ impl State {
         //         .chars()
         //         .collect::<Vec<char>>()
         // }
-        self.available_letters = available_letters;
+        self.available_letters = available_letters.iter().copied().collect();
         self.letters_remaining = letters_remaining;
     }
 
@@ -120,7 +122,7 @@ impl State {
     }
 
     pub fn add_letter(&mut self, c: char) {
-        self.available_letters.insert(c);
+        self.available_letters.push(c);
         self.letters_remaining = String::from_iter(self.letters_remaining.iter())
             .replace(c, "")
             .chars()

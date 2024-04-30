@@ -53,7 +53,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
                 true => {
                     state.set_component(
                         *f,
-                        Component::Render(Some(('░', Some(BLACK), None))),
+                        Component::Render(Some((' ', Some((55,55,55)), None))),
                     );
                 }
                 _ => {
@@ -64,9 +64,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
             state.set_component(*f, Component::Render(None));
         }
     }
-    if !state.fog_enabled {
-        return;
-    }
+    
     for viewer in viewers {
         let view_distance =
             get_component!(state.entities_map[&viewer], Component::ViewDistance).unwrap();
@@ -192,6 +190,9 @@ pub fn sight(state: &mut State, components: &[Component]) {
             }
         }
 
+        if !state.fog_enabled {
+            continue;
+        }
         if state.entities_map[&viewer].contains_component(&Component::AffectsFog) {
             for f in fog_entities.iter() {
                 let fog_pos = get_component!(state.entities_map[f], Component::Position).unwrap();
