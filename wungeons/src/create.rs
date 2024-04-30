@@ -138,7 +138,7 @@ pub fn create_item(entity_id_counter: &mut usize, pos: &Position, item: Item) ->
         entity_id_counter,
         vec![
             Component::Position(Some(pos.clone())),
-            Component::Render(Some((get_item_char(&item), None, Some(WHITE)))),
+            Component::Render(Some((get_item_char(&item), Some(GOLD), Some(BLACK)))),
             Component::ZIndex(Some(4)),
             Component::Item(Some(item)),
         ],

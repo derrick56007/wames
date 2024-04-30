@@ -167,7 +167,7 @@ pub enum Item {
 
 pub fn get_item_char(item: &Item) -> char {
     match item {
-        Item::Key => 'k',
+        Item::Key => '⚷',
     }
 }
 
