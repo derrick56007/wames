@@ -17,6 +17,7 @@ use wurdle::{play, wurdle_words};
 
 use crate::{
     components::{self, Component, Rect},
+    create::{BG_COLOR, BLACK},
     entity::{self, add_entity},
     event, get_component,
     inputs::handle_inputs,
@@ -29,7 +30,7 @@ use crate::{
 pub enum ViewType {
     Player,
     Minion,
-    SecretWall
+    SecretWall,
 }
 
 pub fn sight(state: &mut State, components: &[Component]) {
@@ -50,10 +51,13 @@ pub fn sight(state: &mut State, components: &[Component]) {
         if state.fog_enabled {
             match fog {
                 true => {
-                    state.set_component(*f, Component::Render(Some('░')));
+                    state.set_component(
+                        *f,
+                        Component::Render(Some(('░', Some(BLACK), None))),
+                    );
                 }
                 _ => {
-                    state.set_component(*f, Component::Render(Some(' ')));
+                    state.set_component(*f, Component::Render(Some((' ', None, None))));
                 }
             }
         } else {

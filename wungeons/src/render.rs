@@ -29,11 +29,11 @@ const COLORS: [(&str, &str); 17] = [
     ("reset", "\x1b[0m"),
 ];
 
-pub fn colorize(input: String, color: &str) -> String {
-    let colors: HashMap<&str, &str> = HashMap::from_iter(COLORS);
+// pub fn colorize(input: String, color: &str) -> String {
+//     let colors: HashMap<&str, &str> = HashMap::from_iter(COLORS);
 
-    format!("{}{input}\x1b[0m", colors[color])
-}
+//     format!("{}{input}\x1b[0m", colors[color])
+// }
 
 // pub fn colorize_c(input: char, color: &str) -> String {
 //     let colors: HashMap<&str, &str> = HashMap::from_iter(COLORS);
@@ -41,19 +41,21 @@ pub fn colorize(input: String, color: &str) -> String {
 //     format!("{}{input}\x1b[0m", colors[color])
 // }
 
-fn colorize_foreground_rbg(input: String, r: u8, g: u8, b: u8) -> String {
-    format!("\x1b[38;2;{r};{g};{b}m{input}\x1b[0m")
-}
-fn colorize_background_rbg(input: String, r: u8, g: u8, b: u8) -> String {
-    format!("\x1b[48;2;{r};{g};{b}m{input}\x1b[0m")
-}
+// fn colorize_foreground_rbg(input: String, r: u8, g: u8, b: u8) -> String {
+//     format!("\x1b[38;2;{r};{g};{b}m{input}\x1b[0m")
+// }
+// fn colorize_background_rbg(input: String, r: u8, g: u8, b: u8) -> String {
+//     format!("\x1b[48;2;{r};{g};{b}m{input}\x1b[0m")
+// }
+use colored::*;
 
 pub fn render(state: &mut State, components: &[Component]) {
     let entities = state.get_entities(components);
 
-    let mut buffer: Vec<char> = " "
+    let mut buffer: Vec<String> = " "
         .repeat(state.grid_size.area() as usize)
         .chars()
+        .map(|c|c.to_string())
         .collect();
 
     let mut entities = entities
@@ -79,69 +81,78 @@ pub fn render(state: &mut State, components: &[Component]) {
         // visited_positions.insert(position.clone());
         let idx = state.grid_size.width * position.y + position.x;
 
-        if let Some(render_char) = get_component!(state.entities_map[entity], Component::Render) {
-
-            buffer[idx as usize] = render_char;
+        if let Some((render_char, bg_color, fg_color)) = get_component!(state.entities_map[entity], Component::Render) {
+            let mut res = render_char.to_string();
+            if let Some((r, g, b)) = fg_color {
+                res = res.custom_color(CustomColor { r, g, b }).to_string();
+            }
+            if let Some((r, g, b)) = bg_color {
+                res = res.on_custom_color(CustomColor { r, g, b }).to_string();
+            }
+            if idx >=0 {
+                buffer[idx as usize] = res;
+            }
         }
 
     }
     for i in (0..state.grid_size.height).rev() {
-        buffer.insert((i * state.grid_size.width) as usize, '\n')
+        buffer.insert((i * state.grid_size.width) as usize, "\n".to_string());
     }
     print!("{}[2J", 27 as char);
 
     print!("\x1B[2J\x1B[1;1H");
     // let chars: HashSet<char> = HashSet::from_iter(buffer.clone());
-    let mut new_buffer = "".to_string();
-    for i in buffer {
-        match i {
-            // '@' => {
-            //     new_buffer = format!("{new_buffer}{}", &colorize_background_rbg(colorize(i.to_string(), "foreground green"), 128, 128, 128));
-            // }
-            ' ' => {
-                // new_buffer = format!(
-                //     "{new_buffer}{}",
-                //     &colorize_background_rbg(i.to_string(), 128, 128, 128)
-                // );
-                new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
-            }
-            '█' => {
-                new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
-                // new_buffer = format!(
-                //     "{new_buffer}{}",
-                //     &colorize_background_rbg(i.to_string(), 128, 128, 128)
-                // );
-            }
-            '░' => {
-                new_buffer = format!(
-                    "{new_buffer}{}",
-                    &colorize_background_rbg(i.to_string(), 1, 1, 1)
-                );
-            }
-            '.' => {
-                // new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
-                new_buffer = format!(
-                    "{new_buffer}{}",
-                    &colorize_background_rbg(' '.to_string(), 128, 128, 128)
-                );
-            }
-            '\n' => {
-                new_buffer = format!("{new_buffer}{}", &colorize(i.to_string(), "reset"));
-            }
-            _ => {
-                if i.is_ascii_alphanumeric() || i == '!' || i == '?' {
-                    new_buffer = format!("{new_buffer}{}", &colorize(i.to_string(), "reset"));
-                } else {
-                    new_buffer = format!(
-                        "{new_buffer}{}",
-                        &colorize_background_rbg(i.to_string(), 128, 128, 128)
-                    );
-                }
-            }
-        }
-    }
+    // let mut new_buffer = "".to_string();
+    // for i in buffer {
+    //     match i {
+    //         // '@' => {
+    //         //     new_buffer = format!("{new_buffer}{}", &colorize_background_rbg(colorize(i.to_string(), "foreground green"), 128, 128, 128));
+    //         // }
+    //         ' ' => {
+    //             // new_buffer = format!(
+    //             //     "{new_buffer}{}",
+    //             //     &colorize_background_rbg(i.to_string(), 128, 128, 128)
+    //             // );
+    //             new_buffer = format!("{new_buffer}{}", ' ');
+    //         }
+    //         '█' => {
+    //             new_buffer = format!("{new_buffer}{}", ' ');
+    //             // new_buffer = format!(
+    //             //     "{new_buffer}{}",
+    //             //     &colorize_background_rbg(i.to_string(), 128, 128, 128)
+    //             // );
+    //         }
+    //         '░' => {
+    //             new_buffer = format!(
+    //                 "{new_buffer}{}",
+    //                i.to_string()
+    //             );
+    //         }
+    //         '.' => {
+    //             // new_buffer = format!("{new_buffer}{}", &colorize(' '.to_string(), "reset"));
+    //             new_buffer = format!(
+    //                 "{new_buffer}{}",
+    //                ' '.to_string().on_custom_color(bg_color)
+    //             );
+    //         }
+    //         '\n' => {
+    //             new_buffer = format!("{new_buffer}{}", i.to_string());
+    //         }
+    //         _ => {
+    //             if i.is_ascii_alphanumeric() || i == '!' || i == '?' {
+    //                 new_buffer = format!("{new_buffer}{}", i.to_string());
+    //             } else {
+    //                 new_buffer = format!(
+    //                     "{new_buffer}{}",
+    //                     i.to_string().on_custom_color(bg_color)
+    //                 );
+    //             }
+    //         }
+    //     }
+    // }
 
-    print!("{}", &new_buffer);
+    // print!("{}", &new_buffer);
+    print!("{}", &buffer.join(""));
     let mut available_letters = state
         .available_letters
         .iter()

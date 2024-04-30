@@ -9,13 +9,19 @@ use crate::{
     components::{
         get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS,
         DIRECTIONS,
-    }, create::{create_door, create_floor, create_fog, create_item, create_minion, create_secret_wall, create_wall}, entity::{new_entity, Entity}, render::bresenham, state::State
+    },
+    create::{
+        create_door, create_floor, create_fog, create_item, create_minion, create_secret_wall, create_secret_wall_hint, create_wall
+    },
+    entity::{new_entity, Entity},
+    render::bresenham,
+    state::State,
 };
 
-const BIG_ROOM_WIDTH_RANGE: Range<usize> = 12..14;
+const BIG_ROOM_WIDTH_RANGE: Range<usize> = 11..12;
 const BIG_ROOM_HEIGHT_RANGE: Range<usize> = 6..8;
 
-const ROOM_WIDTH_RANGE: Range<usize> = 7..11;
+const ROOM_WIDTH_RANGE: Range<usize> = 6..7;
 const ROOM_HEIGHT_RANGE: Range<usize> = 4..5;
 
 fn generate_random_point_in_circle(rng: &mut ThreadRng, radius: isize) -> (isize, isize) {
@@ -264,6 +270,8 @@ pub fn create_rooms(
                 entities.push(create_fog(entity_id_counter, &Position { x, y }));
             }
         }
+
+        
     }
 
     for (pos1, pos2) in secret_hallways {
@@ -375,7 +383,7 @@ pub fn create_rooms(
         wall_positions.remove(pos);
     }
     for wall_pos in wall_positions.iter() {
-        entities.push(create_wall(entity_id_counter, wall_pos, '█'));
+        entities.push(create_wall(entity_id_counter, wall_pos, ' '));
     }
 
     let mut secret_wall_group: HashMap<Position, usize> = HashMap::new();
@@ -446,17 +454,23 @@ pub fn create_rooms(
         }
         secret_wall_group.insert(secrete_wall_pos.clone(), group.unwrap());
     }
-    for secrete_wall_pos in secret_wall_positions.iter() {
+    for secret_wall_pos in secret_wall_positions.iter() {
         entities.push(create_secret_wall(
             entity_id_counter,
-            secrete_wall_pos,
+            secret_wall_pos,
             // secret_wall_group[secrete_wall_pos]
             //     .to_string()
             //     .chars()
             //     .next()
             //     .unwrap(),
-            secret_wall_group[secrete_wall_pos],
+            secret_wall_group[secret_wall_pos],
         ));
+        for (_, d) in DIRECTIONS {
+            let new_pos = d + secret_wall_pos;
+            if !wall_positions.contains(&new_pos) && !secret_wall_positions.contains(&new_pos) {
+                entities.push(create_secret_wall_hint(entity_id_counter, &new_pos));
+            }
+        }
     }
 
     for (rect, pos, room_type) in final_rooms.iter() {
@@ -491,7 +505,6 @@ pub fn create_rooms(
         hallways,
     )
 }
-
 
 // pub fn create_ladder(entity_id_counter: &mut usize, pos: &Position, item: Item) -> Entity {
 //     new_entity(

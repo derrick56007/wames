@@ -153,11 +153,11 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
 
         for (d, _) in &dialogue_entities {
             let (_, options) = get_component!(state.entities_map[d], Component::Dialogue).unwrap();
-            // if options.is_empty() {
-            //     state.dialogue_input = "".to_string();
-            //     state.remove_entity(*d);
-            //     state.remove_all_by_component(Component::DialogueChar);
-            // }
+            if options.is_empty() {
+                state.dialogue_input = "".to_string();
+                state.remove_entity(*d);
+                state.remove_all_by_component(Component::DialogueChar);
+            }
             match key {
                 Keycode::Enter => {
                     let k: Option<(String, &Event)> = {
@@ -278,7 +278,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                                 .map(|s| s.to_uppercase())
                                 .collect();
 
-                            // sleep(Duration::from_millis(100));
+                            sleep(Duration::from_millis(100));
 
                             let (won, attempts, word) = play(
                                 tries,

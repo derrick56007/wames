@@ -1,5 +1,6 @@
 use std::process;
 
+use colored::Colorize;
 use device_query::{DeviceQuery, Keycode};
 
 use crate::{
@@ -28,6 +29,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
     state.events.reverse();
     // dbg!("{:?}", &state.events);
     // process::exit(0);
+    let mut seen_wall_hint = false;
     loop {
         if let Some(event) = state.events.pop() {
             match event {
@@ -35,23 +37,28 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     add_entity(
                         create_dialogue(
                             &mut state.entity_id_counter,
-                            format!("You see a minion"),
+                            vec![(format!("You see a minion"), None)],
                             vec![],
                             Position::ZERO,
                         ),
                         state,
                     );
-                },
+                }
                 Event::View(((a, ViewType::Player), (b, ViewType::SecretWall))) => {
+                    if seen_wall_hint {
+                        continue;
+                    }
+                    seen_wall_hint = true;
                     add_entity(
                         create_dialogue(
                             &mut state.entity_id_counter,
-                            format!("You see a crack in the wall"),
+                            vec![(format!("You see a crack in the wall"), None)],
                             vec![],
                             Position::ZERO,
                         ),
                         state,
                     );
+                    state.remove_all_by_component(Component::SecretWallHint)
                 }
                 Event::View(_) => {}
                 Event::ComponentChanged(c) => {
@@ -63,7 +70,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                                 add_entity(
                                     create_dialogue(
                                         &mut state.entity_id_counter,
-                                        "Step 5!".to_string(),
+                                        vec![("Step 5!".to_string(), None)],
                                         vec![],
                                         Position::ZERO,
                                     ),
@@ -102,7 +109,11 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     add_entity(
                         create_dialogue(
                             &mut state.entity_id_counter,
-                            "Welcome to the game!".to_string(),
+                            vec![
+                                ("Welcome to ".to_string(), None),
+                                ("WUNGEON".to_string(), Some((None, Some((255, 0, 0))))),
+                                ("!".to_string(), None),
+                            ],
                             vec![],
                             Position::ZERO,
                         ),
@@ -112,7 +123,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     add_entity(
                         create_dialogue(
                             &mut state.entity_id_counter,
-                            "What is your name?".to_string(),
+                            vec![("What is your name?".to_string(), None)],
                             vec![("".to_string(), Event::CreateName(None))],
                             Position::ZERO,
                         ),
@@ -150,7 +161,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     add_entity(
                         create_dialogue(
                             &mut state.entity_id_counter,
-                            format!("Hello {}!", state.name).to_string(),
+                            vec![(format!("Hello {}!", state.name).to_string(), None)],
                             vec![],
                             Position {
                                 x: 0,
@@ -174,4 +185,3 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
         }
     }
 }
-

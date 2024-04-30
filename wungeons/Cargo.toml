@@ -9,3 +9,5 @@ edition = "2021"
 rand = "0.8.5"
 device_query = "2.0.0"
 wurdle = { path = "../wurdle", version = "0.1.0" }
+colored = "2"
+

@@ -1,5 +1,6 @@
 use std::ops;
 
+use colored::CustomColor;
 use device_query::Keycode;
 
 use crate::{event::Event, sight::ViewType};
@@ -135,21 +136,22 @@ pub enum Component {
     Room,
     Door,
     Position(Option<Position>),
-    Render(Option<char>),
+    Render(Option<(char, Option<(u8, u8, u8)>, Option<(u8, u8, u8)>)>),
     ZIndex(Option<usize>),
     Player,
     Drop(Option<Item>),
     Item(Option<Item>),
     Fog(Option<bool>),
     Solid,
-    Dialogue(Option<(String, Vec<(String, Event)>)>),
+    Dialogue(Option<(Vec<(String, Option<(Option<(u8, u8, u8)>, Option<(u8, u8, u8)>)>)>, Vec<(String, Event)>)>),
     DialogueChar,
     Activated(Option<bool>),
     Cooldown(Option<usize>),
     StepCount(Option<usize>),
     AffectsFog,
     ViewDistance(Option<usize>),
-    Viewable(Option<(ViewType, Vec<usize>)>)
+    Viewable(Option<(ViewType, Vec<usize>)>),
+    SecretWallHint
 }
 
 // #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -191,6 +193,7 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::StepCount(_) => Component::StepCount(None),
         Component::ViewDistance(_) => Component::ViewDistance(None),
         Component::Viewable(_) => Component::Viewable(None),
+        Component::SecretWallHint => Component::SecretWallHint,
         Component::AffectsFog => Component::AffectsFog,
     }
 }
