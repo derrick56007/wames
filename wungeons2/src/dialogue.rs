@@ -33,7 +33,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
 
         // let y = 0;
         let mut x = 0;
-        let mut y = 0;
+        let mut y = 0;// state.grid_size.height;
         for (line, color) in dialogue.0 {
             for c in line.chars() {
                 if c == '\n' {

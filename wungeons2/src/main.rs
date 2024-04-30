@@ -17,26 +17,6 @@ use winit::{
     window::WindowBuilder,
 };
 
-use bytemuck::{Pod, Zeroable};
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-struct Vertex {
-    position: [f32; 2],
-    color: [f32; 3],
-}
-
-impl Vertex {
-    const ATTRIBUTES: [wgpu::VertexAttribute; 2] =
-        wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x3];
-    fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
-        wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &Self::ATTRIBUTES,
-        }
-    }
-}
 
 use std::{mem, sync::Arc};
 
@@ -49,39 +29,6 @@ use game_loop::game_loop;
 // use game_loop::winit::event_loop::EventLoop;
 use game_loop::winit::window::Window;
 // use std::sync::Arc;
-
-const VERTICES: &[Vertex] = &[
-    Vertex {
-        // vertex a
-        position: [-0.5, -0.5],
-        color: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        // vertex b
-        position: [0.5, -0.5],
-        color: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        // vertex d
-        position: [-0.5, 0.5],
-        color: [1.0, 1.0, 0.0],
-    },
-    Vertex {
-        // vertex d
-        position: [-0.5, 0.5],
-        color: [1.0, 1.0, 0.0],
-    },
-    Vertex {
-        // vertex b
-        position: [0.5, -0.5],
-        color: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        // vertex c
-        position: [0.5, 0.5],
-        color: [0.0, 0.0, 1.0],
-    },
-];
 
 const TILE_WIDTH: isize = 18;
 const TILE_HEIGHT: isize = 30;
@@ -155,11 +102,11 @@ async fn run() {
     let mut buffers = vec![];
     let mut to_remove = vec![];
 
-    let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: Some("Vertex Buffer"),
-        contents: bytemuck::cast_slice(VERTICES),
-        usage: wgpu::BufferUsages::VERTEX,
-    });
+    // let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    //     label: Some("Vertex Buffer"),
+    //     contents: bytemuck::cast_slice(VERTICES),
+    //     usage: wgpu::BufferUsages::VERTEX,
+    // });
     game_loop(
         event_loop,
         window.clone(),

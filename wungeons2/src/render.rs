@@ -5,7 +5,11 @@ use std::{
 };
 
 use crate::{
-    components::{Component, Position}, create::WHITE, get_component, state::State, TILE_HEIGHT, TILE_WIDTH
+    components::{Component, Position},
+    create::WHITE,
+    get_component,
+    state::State,
+    TILE_HEIGHT, TILE_WIDTH,
 };
 
 const COLORS: [(&str, &str); 17] = [
@@ -101,41 +105,47 @@ pub fn render(
             get_component!(state.entities_map[entity], Component::Render)
         {
             if state.entities_map[entity].contains_component(&Component::BackgroundColor(None)) {
-
-                
                 if let Some(bg_color) =
-                get_component!(state.entities_map[entity], Component::BackgroundColor)
+                    get_component!(state.entities_map[entity], Component::BackgroundColor)
                 {
-                    let mut buffer = Buffer::new(
-                        &mut font_system,
-                        Metrics::new(TILE_HEIGHT as f32, TILE_HEIGHT as f32),
-                    );
-                    
-                    buffer.set_size(&mut font_system, physical_width, physical_height);
-                    buffer.set_text(
-                        &mut font_system,
-                        &'█'.to_string(),
-                        Attrs::new().family(Family::Monospace),
-                        Shaping::Advanced,
-                    );
-                    
-                    buffers.push((buffer, position, bg_color));
+                    // let mut buffer = Buffer::new(
+                    //     &mut font_system,
+                    //     Metrics::new(TILE_HEIGHT as f32, TILE_HEIGHT as f32),
+                    // );
+
+                    // buffer.set_size(&mut font_system, physical_width, physical_height);
+                    // buffer.set_text(
+                    //     &mut font_system,
+                    //     &'█'.to_string(),
+                    //     Attrs::new().family(Family::Monospace),
+                    //     Shaping::Advanced,
+                    // );
+
+                    buffers.push((
+                        create_buffer('█'.to_string(), font_system),
+                        position,
+                        bg_color,
+                    ));
                 }
             }
-            let mut buffer = Buffer::new(
-                &mut font_system,
-                Metrics::new(TILE_HEIGHT as f32, TILE_HEIGHT as f32),
-            );
+            // let mut buffer = Buffer::new(
+            //     &mut font_system,
+            //     Metrics::new(TILE_HEIGHT as f32, TILE_HEIGHT as f32),
+            // );
 
-            buffer.set_size(&mut font_system, physical_width, physical_height);
-            buffer.set_text(
-                &mut font_system,
-                &render_char.to_string(),
-                Attrs::new().family(Family::Monospace),
-                Shaping::Advanced,
-            );
+            // buffer.set_size(&mut font_system, physical_width, physical_height);
+            // buffer.set_text(
+            //     &mut font_system,
+            //     &render_char.to_string(),
+            //     Attrs::new().family(Family::Monospace),
+            //     Shaping::Advanced,
+            // );
 
-            buffers.push((buffer, position, fg_color));
+            buffers.push((
+                create_buffer(render_char.to_string(), font_system),
+                position,
+                fg_color,
+            ));
             // }
             //     TextArea {
             //     buffer: &buffer,
@@ -154,22 +164,38 @@ pub fn render(
     }
 
     for (x, c) in state.dialogue_input.chars().enumerate() {
-
-        let mut buffer = Buffer::new(
-            &mut font_system,
-            Metrics::new(TILE_HEIGHT as f32, TILE_HEIGHT as f32),
-        );
-
-        buffer.set_size(&mut font_system, physical_width, physical_height);
-        buffer.set_text(
-            &mut font_system,
-            &c.to_string(),
-            Attrs::new().family(Family::Monospace),
-            Shaping::Advanced,
-        );
-
-        buffers.push((buffer, Position{x: x as isize, y: state.grid_size.height}, WHITE));
+        buffers.push((
+            create_buffer(c.to_string(), font_system),
+            Position {
+                x: x as isize,
+                y: state.grid_size.height,
+            },
+            WHITE,
+        ));
     }
+
+    if state.show_deck {
+        let mut additional_post: Vec<String> = vec![
+            "┏━━━━━━━━━━━━━┓".into(),
+            format!("┃ Words: {: >4} ┃", 5),
+            format!("┃ Gold : {: >4} ┃", state.gold),
+            format!("┃ Floor: {: >4} ┃", state.floor),
+            "┗━━━━━━━━━━━━━┛".into(),
+            "┏━━━━TILES━━━━┓".to_string(),
+            // "┃             ┃".to_string(),
+        ];
+        for (i, line) in additional_post.iter().enumerate() {
+            buffers.push((
+                create_buffer(line.to_string(), font_system),
+                Position {
+                    x: state.grid_size.width as isize,
+                    y: i as isize,
+                },
+                WHITE,
+            ));
+        }
+    }
+
     // let left_side_width = 20;
 
     // let mut additional_post: Vec<String> = vec![
@@ -368,4 +394,25 @@ pub fn bresenham(pos0: &Position, pos1: &Position) -> Vec<Position> {
     }
 
     line
+}
+
+pub fn create_buffer(text: String, mut font_system: &mut FontSystem) -> Buffer {
+    let mut buffer = Buffer::new(
+        &mut font_system,
+        Metrics::new(TILE_HEIGHT as f32, TILE_HEIGHT as f32),
+    );
+
+    let physical_width = (TILE_WIDTH as f64) as f32;
+    let physical_height = (TILE_HEIGHT as f64) as f32;
+    buffer.set_size(&mut font_system, physical_width * text.len() as f32, physical_height);
+    buffer.set_text(
+        &mut font_system,
+        &text,
+        Attrs::new().family(Family::Monospace),
+        Shaping::Advanced,
+    );
+
+    buffer
+
+    // buffers.push((buffer, Position{x: x as isize, y: state.grid_size.height}, WHITE));
 }

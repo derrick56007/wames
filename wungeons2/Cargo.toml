@@ -13,6 +13,4 @@ pollster = "0.3.0"
 game-loop = { version = "*", features = ["winit"] } # or tao
 rand = "0.8.5"
 wurdle = { path = "../wurdle", version = "0.1.0" }
-bytemuck = { version = "1.4", features = ["derive"] }
-wgpu-noboiler = "0.2.0"
 
