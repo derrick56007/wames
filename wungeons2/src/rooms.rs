@@ -310,7 +310,7 @@ pub fn create_rooms(
                     entity_id_counter,
                     &boss_position,
                     minion_letters.pop().unwrap(),
-                    'Ӧ',
+                    'Ӧ'.to_string(),
                     true,
                     false,
                 ));
@@ -320,7 +320,7 @@ pub fn create_rooms(
                     entity_id_counter,
                     &rect.center(pos),
                     minion_letters.pop().unwrap(),
-                    'ଳ',
+                    'ଳ'.to_string(),
                     false,
                     if !spawned_key {
                         spawned_key = true;
@@ -336,7 +336,7 @@ pub fn create_rooms(
                         entity_id_counter,
                         vec![
                             Component::Position(Some(rect.center(pos) + &d)),
-                            Component::Render(Some(('█', GOLD))),
+                            Component::Render(Some(("█".to_string(), GOLD))),
                             Component::ZIndex(Some(4)),
                         ],
                     ));
@@ -347,7 +347,7 @@ pub fn create_rooms(
                         entity_id_counter,
                         vec![
                             Component::Position(Some(rect.center(pos) + &d)),
-                            Component::Render(Some(('█', GOLD))),
+                            Component::Render(Some(("█".to_string(), GOLD))),
                             Component::ZIndex(Some(4)),
                         ],
                     ));

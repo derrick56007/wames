@@ -47,11 +47,11 @@ pub fn sight(state: &mut State, components: &[Component]) {
                 true => {
                     state.set_component(
                         *f,
-                        Component::Render(Some(('█', (55,55,55)))),
+                        Component::Render(Some(("█".to_string(), (55,55,55)))),
                     );
                 }
                 _ => {
-                    state.set_component(*f, Component::Render(Some(('█', BLACK))));
+                    state.set_component(*f, Component::Render(Some(("█".to_string(), BLACK))));
                 }
             }
         } else {

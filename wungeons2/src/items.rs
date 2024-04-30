@@ -101,11 +101,11 @@ pub fn use_item(item: &Item, _state: &mut State) {
     }
 }
 
-pub fn get_item_char(item: &Item) -> char {
+pub fn get_item_char(item: &Item) -> String {
     match item {
-        Item::Key => '⚷',
-        Item::Glasses => 'ው',
-        Item::MembershipCard => '⌻',
+        Item::Key => "⚷",
+        Item::Glasses => "ው",
+        Item::MembershipCard => "⌻",
         Item::VowelVortex => todo!(),
         Item::ConsonantConundrum => todo!(),
         Item::DoubleDouble => todo!(),
@@ -123,7 +123,7 @@ pub fn get_item_char(item: &Item) -> char {
         Item::SizzlingRug => todo!(),
         Item::FuzzyKeyboard => todo!(),
         Item::BathroomSteak => todo!(),
-    }
+    }.to_string()
 }
 
 pub fn get_item_cost(item: &Item) -> usize {

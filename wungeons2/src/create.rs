@@ -11,7 +11,7 @@ pub fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity
         vec![
             Component::Wall,
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█', BLACK))),
+            Component::Render(Some(('█'.to_string(), BLACK))),
             Component::ZIndex(Some(0)),
             Component::Solid,
         ],
@@ -29,7 +29,7 @@ pub fn create_secret_wall(
         vec![
             Component::SecretWall(Some(group)),
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█', BLACK))),
+            Component::Render(Some(('█'.to_string(), BLACK))),
             Component::ZIndex(Some(2)),
             Component::Solid,
             // Component::Viewable(Some((ViewType::SecretWall(group), vec![])))
@@ -62,7 +62,7 @@ pub fn create_fog(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity 
         vec![
             // Component::Wall,
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█', BLACK))),
+            Component::Render(Some(('█'.to_string(), BLACK))),
             Component::ZIndex(Some(5)),
             Component::Fog(Some(false)),
         ],
@@ -75,7 +75,7 @@ pub fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entit
         vec![
             // Component::Wall,
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█', BG_COLOR))),
+            Component::Render(Some(('█'.to_string(), BG_COLOR))),
             Component::ZIndex(Some(0)),
             // Component::Fog(Some(FogState::Dark))
         ],
@@ -88,7 +88,7 @@ pub fn create_revealed_floor(entity_id_counter: &mut usize, wall_pos: &Position)
         vec![
             // Component::Wall,
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█', REVEALED_BG_COLOR))),
+            Component::Render(Some(('█'.to_string(), REVEALED_BG_COLOR))),
             Component::ZIndex(Some(1)),
             // Component::Fog(Some(FogState::Dark))
         ],
@@ -102,7 +102,7 @@ pub fn create_door(entity_id_counter: &mut usize, pos: &Position) -> Entity {
             Component::Wall,
             Component::Door,
             Component::Position(Some(*pos)),
-            Component::Render(Some(('$', WHITE))),
+            Component::Render(Some(('$'.to_string(), WHITE))),
             Component::ZIndex(Some(1)),
         ],
     )
@@ -112,7 +112,7 @@ pub fn create_minion(
     entity_id_counter: &mut usize,
     pos: &Position,
     c: char,
-    looks: char,
+    looks: String,
     is_boss: bool,
     spawn_key: bool,
 ) -> Entity {
@@ -178,7 +178,7 @@ pub fn create_player(entity_id_counter: &mut usize, pos: Position) -> Entity {
         entity_id_counter,
         vec![
             Component::Position(Some(pos)),
-            Component::Render(Some(('⛄', BLACK))),
+            Component::Render(Some(("👳🏾‍♂️".to_string(), BLACK))),
             // Component::BackgroundColor(Some((255, 0, 0))),
             Component::ZIndex(Some(5)),
             Component::Player,

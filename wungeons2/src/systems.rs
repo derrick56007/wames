@@ -1,7 +1,7 @@
 
 
 use crate::{
-    components::{Component},
+    components::Component,
     dialogue::dialogue,
     event::{game_events, Event},
     sight::sight,
@@ -31,11 +31,6 @@ pub fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)
             ],
             false,
         ),
-        // (
-        //     dummy,
-        //     vec![Component::Dialogue(None), Component::Solid],
-        //     false,
-        // ),
         (
             sight,
             vec![
@@ -55,9 +50,6 @@ pub fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)
             ],
             false,
         ),
-        (dummy, vec![Component::Player], false),
-        // (dummy, vec![Component::BackgroundColor(None)], false),
-        // (collisions, vec![], false),
     ]
 }
 

@@ -138,7 +138,7 @@ pub enum Component {
     Room,
     Door,
     Position(Option<Position>),
-    Render(Option<(char, (u8, u8, u8))>),
+    Render(Option<(String, (u8, u8, u8))>),
     BackgroundColor(Option<(u8, u8, u8)>),
     ZIndex(Option<usize>),
     Player,

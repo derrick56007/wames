@@ -22,7 +22,7 @@ use crate::{
     state::State,
 };
 
-pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<KeyCode>) {
+pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<KeyCode>, repeat: bool) {
     let entities = state
         .component_map
         .get(components)
@@ -169,7 +169,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
 
     if let Some((d, _)) = dialogue_entities.first() {
         let (_, options) = get_component!(state.entities_map[d], Component::Dialogue).unwrap();
-        if options.is_empty() {
+        if options.is_empty() && !repeat {
             state.dialogue_input = "".to_string();
             state.remove_entity(*d);
             state.remove_all_by_component(Component::DialogueChar);

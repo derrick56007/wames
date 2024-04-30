@@ -1,10 +1,9 @@
 use glyphon::{
-    Color, FontSystem, Resolution, SwashCache, TextArea,
-    TextAtlas, TextBounds, TextRenderer,
+    Color, FontSystem, Resolution, SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer,
 };
 use wgpu::{
-    CommandEncoderDescriptor, CompositeAlphaMode, DeviceDescriptor, Features,
-    Instance, InstanceDescriptor, Limits, LoadOp, MultisampleState, Operations, PresentMode,
+    CommandEncoderDescriptor, CompositeAlphaMode, DeviceDescriptor, Features, Instance,
+    InstanceDescriptor, Limits, LoadOp, MultisampleState, Operations, PresentMode,
     RenderPassColorAttachment, RenderPassDescriptor, RequestAdapterOptions, SurfaceConfiguration,
     TextureFormat, TextureUsages, TextureViewDescriptor,
 };
@@ -16,18 +15,9 @@ use winit::{
     window::WindowBuilder,
 };
 
-
-use std::{sync::Arc};
+use std::sync::Arc;
 
 use game_loop::game_loop;
-
-// For convenience, game_loop re-exports winit so you don't need to add it as
-// an additional dependency of your crate.
-
-// use game_loop::winit::event::{Event, WindowEvent};
-// use game_loop::winit::event_loop::EventLoop;
-
-// use std::sync::Arc;
 
 const TILE_WIDTH: isize = 18;
 const TILE_HEIGHT: isize = 30;
@@ -80,32 +70,16 @@ async fn run() {
     };
     surface.configure(&device, &config);
 
-    // Set up text renderer
     let mut font_system = FontSystem::new();
     let mut cache = SwashCache::new();
     let mut atlas = TextAtlas::new(&device, &queue, swapchain_format);
     let mut text_renderer =
         TextRenderer::new(&mut atlas, &device, MultisampleState::default(), None);
-    // let mut buffer = Buffer::new(&mut font_system, Metrics::new(30.0, 42.0));
-
-    // let physical_width = (width as f64 * scale_factor) as f32;
-    // let physical_height = (height as f64 * scale_factor) as f32;
-
-    // buffer.set_size(&mut font_system, physical_width, physical_height);
-    // // buffer.set_text(&mut font_system, "Hello world! 👋\nThis is rendered with 🦅 glyphon 🦁\nThe text below should be partially clipped.\na b c d e f g h i j k l m n o p q r s t u v w x y z", Attrs::new().family(Family::SansSerif), Shaping::Advanced);
-    // buffer.shape_until_scroll(&mut font_system);
-    // let window = WindowBuilder::new().build(&event_loop).unwrap();
-    // let window = Arc::new(window);
 
     let game = Game::new();
     let mut buffers = vec![];
     let mut to_remove = vec![];
 
-    // let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-    //     label: Some("Vertex Buffer"),
-    //     contents: bytemuck::cast_slice(VERTICES),
-    //     usage: wgpu::BufferUsages::VERTEX,
-    // });
     game_loop(
         event_loop,
         window.clone(),
@@ -113,7 +87,6 @@ async fn run() {
         60,
         0.1,
         move |g| {
-            // g.game.your_update_function();
             let start = SystemTime::now();
 
             for (i, (system, components, single_shot)) in &mut g.game.systems.iter().enumerate() {
@@ -129,12 +102,7 @@ async fn run() {
             }
             to_remove.clear();
 
-            g.game.state.update_loop_duration =
-                SystemTime::now().duration_since(start).unwrap();
-
-            // if state.full_loop_duration.unwrap() < Duration::from_millis(16) {
-            //     sleep(Duration::from_millis(16) - state.full_loop_duration.unwrap());
-            // }
+            g.game.state.update_loop_duration = SystemTime::now().duration_since(start).unwrap();
         },
         move |g| {
             let start = SystemTime::now();
@@ -153,39 +121,21 @@ async fn run() {
                 ],
                 &mut buffers,
             );
-            let text_areas = buffers
-                .iter()
-                .map(|(buffer, position, color)| TextArea {
-                    buffer,
-                    left: (position.x * TILE_WIDTH) as f32,
-                    top: (position.y * TILE_HEIGHT) as f32,
-                    scale: 1.0,
-                    bounds: TextBounds {
-                        left: (position.x * TILE_WIDTH) as i32,
-                        top: (position.y * TILE_HEIGHT) as i32,
-                        right: ((position.x + TILE_WIDTH) * TILE_WIDTH) as i32,
-                        bottom: ((position.y + TILE_HEIGHT) * TILE_HEIGHT) as i32,
-                    },
+            let text_areas = buffers.iter().map(|(buffer, position, color)| TextArea {
+                buffer,
+                left: (position.x * TILE_WIDTH) as f32,
+                top: (position.y * TILE_HEIGHT) as f32,
+                scale: 1.0,
+                bounds: TextBounds {
+                    left: (position.x * TILE_WIDTH) as i32,
+                    top: (position.y * TILE_HEIGHT) as i32,
+                    right: ((position.x + TILE_WIDTH) * TILE_WIDTH) as i32,
+                    bottom: ((position.y + TILE_HEIGHT) * TILE_HEIGHT) as i32,
+                },
 
-                    default_color: 
-                        Color::rgb(color.0, color.1, color.2)
-                    
-                });
-            // buffer.set_text(
-            //     &mut font_system,
-            //     &g.game.text,
-            //     Attrs::new().family(Family::SansSerif),
-            //     Shaping::Advanced,
-            // );
-            // dbg!(&text_areas);
-            // let mut buffer = Buffer::new(&mut font_system, Metrics::new(30.0, 42.0));
+                default_color: Color::rgb(color.0, color.1, color.2),
+            });
 
-            // let physical_width = (width as f64 * scale_factor) as f32;
-            // let physical_height = (height as f64 * scale_factor) as f32;
-
-            // buffer.set_size(&mut font_system, physical_width, physical_height);
-            // buffer.set_text(&mut font_system, "Hello world! 👋\nThis is rendered with 🦅 glyphon 🦁\nThe text below should be partially clipped.\na b c d e f g h i j k l m n o p q r s t u v w x y z", Attrs::new().family(Family::SansSerif), Shaping::Advanced);
-            // buffer.shape_until_scroll(&mut font_system);
             text_renderer
                 .prepare(
                     &device,
@@ -196,20 +146,7 @@ async fn run() {
                         width: config.width,
                         height: config.height,
                     },
-                    // [TextArea {
-                    //     buffer: &buffer,
-                    //     left: 0.0,
-                    //     top: 0.0,
-                    //     scale: 1.0,
-                    //     bounds: TextBounds {
-                    //         left: 0,
-                    //         top: 0,
-                    //         right: 100,
-                    //         bottom: 100,
-                    //     },
-                    //     default_color: Color::rgb(255, 255, 255),
-                    // }],
-                    text_areas.clone(),
+                    text_areas,
                     &mut cache,
                 )
                 .unwrap();
@@ -247,8 +184,7 @@ async fn run() {
 
             atlas.trim();
 
-            g.game.state.render_loop_duration =
-                SystemTime::now().duration_since(start).unwrap();
+            g.game.state.render_loop_duration = SystemTime::now().duration_since(start).unwrap();
 
             g.game.num_renders += 1;
             window.set_title(&format!(
@@ -271,16 +207,15 @@ async fn run() {
                     match event {
                         KeyEvent {
                             physical_key,
-                            
-                            
-                            
+
                             state,
+                            repeat,
                             // repeat: false,
                             ..
                         } => match (physical_key, state) {
                             (PhysicalKey::Code(code), ElementState::Pressed) => {
                                 // g.window.request_redraw();
-                                handle_inputs(&mut g.game.state, &[Component::Player], Some(*code))
+                                handle_inputs(&mut g.game.state, &[Component::Player], Some(*code), *repeat)
                             }
                             (_, _) => {}
                         },
@@ -425,15 +360,11 @@ fn main() {
     pollster::block_on(run());
 }
 
-use std::{
-    time::{SystemTime},
-};
-
+use std::time::SystemTime;
 
 // use device_query::{DeviceQuery, Keycode};
 
 // use event::Event;
-
 
 // use rooms::{create_floor, create_item};
 // use wurdle::{play, wurdle_words};
