@@ -65,6 +65,52 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                 x += 1;
             }
         }
+        y += 1;
+        x = 0;
+
+        for (i, (o, _)) in dialogue.1.iter().enumerate() {
+            if o == "" {
+                continue;
+            }
+            // y += 1;
+            for c in o.chars() {
+                add_entity(
+                    new_entity(
+                        &mut state.entity_id_counter,
+                        vec![
+                            Component::Position(Some(Position {
+                                x: pos.x + x,
+                                y: pos.y + y,
+                            })),
+                            Component::ZIndex(Some(*z)),
+                            Component::Render(Some((c, None, None))),
+                            Component::DialogueChar,
+                        ],
+                    ),
+                    state,
+                );
+                x += 1;
+            }
+            if i == dialogue.1.len() - 1 {
+                break;
+            }
+            add_entity(
+                new_entity(
+                    &mut state.entity_id_counter,
+                    vec![
+                        Component::Position(Some(Position {
+                            x: pos.x + x,
+                            y: pos.y + y,
+                        })),
+                        Component::ZIndex(Some(*z)),
+                        Component::Render(Some(('/', None, None))),
+                        Component::DialogueChar,
+                    ],
+                ),
+                state,
+            );
+            x += 1;
+        }
         state.set_component(*e, Component::Activated(Some(true)));
         break;
     }

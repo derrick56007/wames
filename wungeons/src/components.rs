@@ -3,7 +3,7 @@ use std::ops;
 use colored::CustomColor;
 use device_query::Keycode;
 
-use crate::{event::Event, sight::ViewType};
+use crate::{event::Event, items::Item, sight::ViewType};
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug, Copy)]
 pub struct Position {
@@ -151,7 +151,8 @@ pub enum Component {
     AffectsFog,
     ViewDistance(Option<usize>),
     Viewable(Option<(ViewType, Vec<usize>)>),
-    SecretWallHint
+    SecretWallHint,
+    Paywall(Option<usize>),
 }
 
 // #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -160,16 +161,6 @@ pub enum Component {
 //     Lit,
 // }
 
-#[derive(PartialEq, Eq, Hash, Clone, Debug, PartialOrd, Ord)]
-pub enum Item {
-    Key,
-}
-
-pub fn get_item_char(item: &Item) -> char {
-    match item {
-        Item::Key => '⚷',
-    }
-}
 
 pub fn get_default_component(c: &Component) -> Component {
     match c {
@@ -195,5 +186,6 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::Viewable(_) => Component::Viewable(None),
         Component::SecretWallHint => Component::SecretWallHint,
         Component::AffectsFog => Component::AffectsFog,
+        Component::Paywall(_) => Component::Paywall(None),
     }
 }

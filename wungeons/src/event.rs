@@ -2,11 +2,13 @@ use std::process;
 
 use colored::Colorize;
 use device_query::{DeviceQuery, Keycode};
+use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     components::{Component, Position},
     create::{create_dialogue, create_player},
     entity::{add_entity, new_entity},
+    items::{get_item_use_on_pickup, use_item, Item},
     rooms::create_rooms,
     sight::ViewType,
     state::State,
@@ -23,6 +25,9 @@ pub enum Event {
 
     // dialogue
     CreateName(Option<String>),
+
+    // id, item, cost, player
+    BuyItem((usize, Item, usize, usize)),
 }
 
 pub fn game_events(state: &mut State, _components: &[Component]) {
@@ -33,6 +38,50 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
     loop {
         if let Some(event) = state.events.pop() {
             match event {
+                Event::BuyItem((e, item, cost, player)) => {
+                    if state.gold >= cost {
+                        state.items.push(item.clone());
+                        state.remove_entity(e);
+
+                        if cost == 0 {
+                            add_entity(
+                                create_dialogue(
+                                    &mut state.entity_id_counter,
+                                    vec![(format!("You picked up the {:?}", item), None)],
+                                    vec![],
+                                    Position::ZERO,
+                                ),
+                                state,
+                            );
+                        } else {
+                            add_entity(
+                                create_dialogue(
+                                    &mut state.entity_id_counter,
+                                    vec![(
+                                        format!("You bought the {:?} for {}g", item, cost),
+                                        None,
+                                    )],
+                                    vec![],
+                                    Position::ZERO,
+                                ),
+                                state,
+                            );
+                        }
+                        if get_item_use_on_pickup(&item) {
+                            use_item(&item, state);
+                        }
+                    } else {
+                        add_entity(
+                            create_dialogue(
+                                &mut state.entity_id_counter,
+                                vec![("You don't have enough gold!".into(), None)],
+                                vec![],
+                                Position::ZERO,
+                            ),
+                            state,
+                        )
+                    }
+                }
                 Event::View(((a, ViewType::Player), (b, ViewType::Minion))) => {
                     add_entity(
                         create_dialogue(
@@ -184,4 +233,56 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
             return;
         }
     }
+}
+
+pub fn random_name(rng: &mut ThreadRng) -> String {
+    let length = 3;
+    // int length = new Scanner(System.in).nextInt();
+    let vowels: Vec<char> = "aeiou".chars().collect();
+    let consonants: Vec<char> = "bcdfghjklmnpqrstvwxyz".chars().collect();
+    // Random gen = new Random();
+    // let rng = &mut rand::thread_rng();
+    // char[][] pairs = new char[length][2];
+    // for (char[] pair : pairs) {
+    // 	pair[0] = vowels.charAt(gen.nextInt(vowels.length()));
+    // 	pair[1] = consonants.charAt(gen.nextInt(consonants.length()));
+    // }
+    let pairs = (0..length)
+        .into_iter()
+        .map(|_| {
+            (
+                vowels[rng.gen_range(0..vowels.len())],
+                consonants[rng.gen_range(0..consonants.len())],
+            )
+        })
+        .collect::<Vec<(char, char)>>();
+    // System.out.println("Generated!");
+    // System.out.print("The name is: ");
+    // StringBuilder name = new StringBuilder();
+    let mut name = vec![];
+    for pair in &pairs {
+        if rng.gen_bool(0.5) {
+            name.push(pair.0);
+            name.push(pair.1);
+        } else {
+            name.push(pair.0);
+            name.push(pair.1);
+        }
+    }
+    if rng.gen_bool(0.5) {
+        if vowels
+            .iter()
+            .position(|n| *n == name[name.len() - 1])
+            .is_some()
+        {
+            name.push(consonants[rng.gen_range(0..consonants.len())]);
+        } else {
+            name.push(vowels[rng.gen_range(0..vowels.len())]);
+        }
+    }
+
+    name.iter()
+        .map(|c| c.to_string())
+        .collect::<Vec<String>>()
+        .join("")
 }

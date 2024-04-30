@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     io::{stdout, Write},
+    iter::zip,
 };
 
 use crate::{
@@ -98,8 +99,15 @@ pub fn render(state: &mut State, components: &[Component]) {
     }
     let left_side_width = 20;
 
-    let mut additional_pre: Vec<String> = vec![" ".repeat(left_side_width), "Hands: 1".into()];
-    let mut additional_post: Vec<String> = vec!["┏━━━━┓".to_string()];
+    let mut additional_post: Vec<String> = vec![
+        "┏━━━━━━━━━━━━━┓".into(),
+        format!("┃ Words: {: >4} ┃", 5),
+        format!("┃ Gold : {: >4} ┃", state.gold),
+        format!("┃ Floor: {: >4} ┃", state.floor),
+        "┗━━━━━━━━━━━━━┛".into(),
+        "┏━━━━TILES━━━━┓".to_string(),
+        // "┃             ┃".to_string(),
+    ];
     let mut freq = HashMap::<char, usize>::new();
     for l in "ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars() {
         if !freq.contains_key(&l) {
@@ -110,13 +118,13 @@ pub fn render(state: &mut State, components: &[Component]) {
         }
         freq.insert(l, freq[&l] + 1);
     }
-    for l in "ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars() {
+    for (l1, l2) in zip("ABCDEFGHIJKLM".chars(), "NOPQRSTUVWXYZ".chars()) {
         // if !freq.contains_key(&l) {
         //     continue;
         // }
-        additional_post.push(format!("┃{} x{}┃", l, freq[&l]))
+        additional_post.push(format!("┃ {} x{} ┃ {} x{} ┃", l1, freq[&l1], l2, freq[&l2]))
     }
-    additional_post.push("┗━━━━┛".into());
+    additional_post.push("┗━━━━━━━━━━━━━┛".into());
 
     if !state.show_deck {
         additional_post.clear();

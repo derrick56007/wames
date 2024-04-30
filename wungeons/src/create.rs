@@ -1,10 +1,8 @@
 use colored::CustomColor;
+use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
-    components::{get_item_char, Component, Item, Position},
-    entity::{new_entity, Entity},
-    event::Event,
-    sight::ViewType,
+    components::{Component, Position}, entity::{new_entity, Entity}, event::Event, items::{get_item_char, get_item_cost, Item}, sight::ViewType
 };
 
 pub fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position, c: char) -> Entity {
@@ -133,19 +131,39 @@ pub fn create_minion(
     new_entity(entity_id_counter, comps)
 }
 
-pub fn create_item(entity_id_counter: &mut usize, pos: &Position, item: Item) -> Entity {
+pub fn create_item(rng: &mut ThreadRng, entity_id_counter: &mut usize, pos: &Position, item: Option<Item>, cost: Option<usize>) -> Entity {
+    let items_list = [
+        Item::Glasses,
+        Item::Key,
+    ];
+    let item = if item.is_none() {
+        items_list[rng.gen::<usize>() % items_list.len()].clone()
+    } else {
+        item.unwrap()
+    };
+    let cost = if cost.is_none() {
+        get_item_cost(&item)
+    } else {
+        cost.unwrap()
+    };
+    
+    let mut comps = vec![
+        Component::Position(Some(pos.clone())),
+        Component::Render(Some((get_item_char(&item), Some(GOLD), Some(BLACK)))),
+        Component::ZIndex(Some(4)),
+        Component::Item(Some(item)),
+        Component::Paywall(Some(cost))
+    ];
+    // if cost > 0 {
+    //     comps.push(Component::Paywall(Some(cost)));
+    // }
     new_entity(
         entity_id_counter,
-        vec![
-            Component::Position(Some(pos.clone())),
-            Component::Render(Some((get_item_char(&item), Some(GOLD), Some(BLACK)))),
-            Component::ZIndex(Some(4)),
-            Component::Item(Some(item)),
-        ],
+        comps,
     )
 }
 
-pub const PLAYER_WALK_COOLDOWN: usize = 6;
+pub const PLAYER_WALK_COOLDOWN: usize = 5;
 pub const PLAYER_VIEW_DISTANCE: usize = 9;
 pub const BG_COLOR: (u8, u8, u8) 
 = (78,54,42);

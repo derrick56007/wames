@@ -7,10 +7,7 @@ use device_query::{DeviceState, Keycode};
 use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
-    components::{get_default_component, Component, Item, Position, Rect},
-    entity::Entity,
-    event::Event,
-    rooms::RoomType,
+    components::{get_default_component, Component,  Position, Rect}, entity::Entity, event::Event, items::Item, rooms::RoomType
 };
 
 pub struct State {
@@ -37,6 +34,7 @@ pub struct State {
     pub dialogue_input: String,
     empty_entites_set: HashSet<usize>,
     pub show_deck: bool,
+    pub floor: usize,
     // pub step_counter: usize,
     // pub systems: Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>,
 }
@@ -72,6 +70,7 @@ impl State {
             dialogue_input: "".to_string(),
             name: "".to_string(),
             empty_entites_set: HashSet::new(),
+            floor: 1,
         };
         n.refresh();
         n

@@ -2,7 +2,7 @@ use std::{
     collections::{HashMap, HashSet}, env, io::BufRead, process, thread::sleep, time::{Duration, SystemTime}
 };
 
-use components::{Item, Position, DIRECTIONS};
+use components::{ Position, DIRECTIONS};
 use device_query::{DeviceQuery, Keycode};
 use entity::new_entity;
 use event::Event;
@@ -26,6 +26,7 @@ mod sight;
 mod systems;
 mod dialogue;
 mod create;
+mod items;
 
 use crate::render::render;
 

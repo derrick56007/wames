@@ -7,13 +7,14 @@ use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     components::{
-        get_item_char, intersects, line_rect, Component, Item, Position, Rect, DIAGONAL_DIRECTIONS,
-        DIRECTIONS,
+        intersects, line_rect, Component, Position, Rect, DIAGONAL_DIRECTIONS, DIRECTIONS,
     },
     create::{
-        create_door, create_floor, create_fog, create_item, create_minion, create_secret_wall, create_secret_wall_hint, create_wall, GOLD
+        create_door, create_floor, create_fog, create_item, create_minion, create_secret_wall,
+        create_secret_wall_hint, create_wall, GOLD,
     },
     entity::{new_entity, Entity},
+    items::Item,
     render::bresenham,
     state::State,
 };
@@ -96,6 +97,9 @@ pub enum RoomType {
     Regular,
     Starting,
     Secret,
+    Merchant,
+    Mystery,
+    Item,
 }
 
 pub fn create_rooms(
@@ -109,7 +113,7 @@ pub fn create_rooms(
     Vec<(Position, Position)>,
 ) {
     let mut rooms: Vec<(Rect, Position, RoomType)> = vec![];
-    let num_big_rooms = 4;
+    let num_big_rooms = 6;
     let num_small_rooms = 5;
     let num_rooms = 5;
     let mut big_lines: Vec<(Position, Position)> = vec![];
@@ -148,6 +152,9 @@ pub fn create_rooms(
             },
         ));
     }
+    rooms[num_small_rooms + num_big_rooms - 1].2 = RoomType::Merchant;
+    rooms[num_small_rooms + num_big_rooms - 2].2 = RoomType::Mystery;
+    rooms[num_small_rooms + num_big_rooms - 3].2 = RoomType::Item;
 
     resolve_collisions(&mut rooms, grid_size, rng, num_small_rooms);
 
@@ -271,8 +278,6 @@ pub fn create_rooms(
                 entities.push(create_fog(entity_id_counter, &Position { x, y }));
             }
         }
-
-
     }
 
     for (pos1, pos2) in secret_hallways {
@@ -290,61 +295,128 @@ pub fn create_rooms(
     for (rect, pos, room_type) in final_rooms.iter() {
         // break;
         let room_type = **room_type;
-        if room_type == RoomType::Boss {
-            let boss_position = rect.center(pos);
+        match room_type {
+            RoomType::Boss => {
+                let boss_position = rect.center(pos);
 
-            for (_, d) in DIRECTIONS {
-                entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
-            }
-            for (_, d) in DIAGONAL_DIRECTIONS {
-                entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
-            }
+                for (_, d) in DIRECTIONS {
+                    entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
+                }
+                for (_, d) in DIAGONAL_DIRECTIONS {
+                    entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
+                }
 
-            entities.push(create_minion(
-                entity_id_counter,
-                &boss_position,
-                minion_letters.pop().unwrap(),
-                'Ӧ',
-                true,
-                false,
-            ));
-        } else if room_type == RoomType::Big {
-            entities.push(create_minion(
-                entity_id_counter,
-                &rect.center(pos),
-                minion_letters.pop().unwrap(),
-                'ଳ',
-                false,
-                if !spawned_key {
-                    spawned_key = true;
-                    true
-                } else {
-                    false
-                },
-            ));
-        } else if room_type == RoomType::Secret {
-            for (_, d) in DIAGONAL_DIRECTIONS {
-                entities.push(new_entity(entity_id_counter, vec![
-                    Component::Position(Some(rect.center(pos) + &d)),
-                    Component::Render(Some((' ', Some(GOLD),None))),
-                    Component::ZIndex(Some(4)),
-                ]));
-
+                entities.push(create_minion(
+                    entity_id_counter,
+                    &boss_position,
+                    minion_letters.pop().unwrap(),
+                    'Ӧ',
+                    true,
+                    false,
+                ));
             }
-
-            for (_, d) in DIRECTIONS {
-                entities.push(new_entity(entity_id_counter, vec![
-                    Component::Position(Some(rect.center(pos) + &d)),
-                    Component::Render(Some((' ', Some(GOLD),None))),
-                    Component::ZIndex(Some(4)),
-                ]));
+            RoomType::Big => {
+                entities.push(create_minion(
+                    entity_id_counter,
+                    &rect.center(pos),
+                    minion_letters.pop().unwrap(),
+                    'ଳ',
+                    false,
+                    if !spawned_key {
+                        spawned_key = true;
+                        true
+                    } else {
+                        false
+                    },
+                ));
             }
-            entities.push(new_entity(entity_id_counter, vec![
-                Component::Position(Some(rect.center(pos))),
-                Component::Render(Some((' ', Some(GOLD),None))),
-                Component::ZIndex(Some(3)),
-            ]));
-            entities.push(create_item(entity_id_counter, &rect.center(pos), Item::Key))
+            RoomType::Secret => {
+                for (_, d) in DIAGONAL_DIRECTIONS {
+                    entities.push(new_entity(
+                        entity_id_counter,
+                        vec![
+                            Component::Position(Some(rect.center(pos) + &d)),
+                            Component::Render(Some((' ', Some(GOLD), None))),
+                            Component::ZIndex(Some(4)),
+                        ],
+                    ));
+                }
+
+                for (_, d) in DIRECTIONS {
+                    entities.push(new_entity(
+                        entity_id_counter,
+                        vec![
+                            Component::Position(Some(rect.center(pos) + &d)),
+                            Component::Render(Some((' ', Some(GOLD), None))),
+                            Component::ZIndex(Some(4)),
+                        ],
+                    ));
+                }
+                entities.push(new_entity(
+                    entity_id_counter,
+                    vec![
+                        Component::Position(Some(rect.center(pos))),
+                        Component::Render(Some((' ', Some(GOLD), None))),
+                        Component::ZIndex(Some(3)),
+                    ],
+                ));
+                entities.push(create_item(
+                    &mut state.rng,
+                    entity_id_counter,
+                    &rect.center(pos),
+                    Some(Item::Key),
+                    Some(0),
+                ))
+            }
+            RoomType::Regular => {}
+            RoomType::Starting => {}
+            RoomType::Merchant => {
+                let mut left = rect.center(pos);
+                left.x -= 2;
+
+                let mut right = rect.center(pos);
+                right.x += 2;
+
+                entities.push(create_item(
+                    &mut state.rng,
+                    entity_id_counter,
+                    &rect.center(pos),
+                    None,
+                    None,
+                ));
+                entities.push(create_item(
+                    &mut state.rng,
+                    entity_id_counter,
+                    &left,
+                    None,
+                    None,
+                ));
+                entities.push(create_item(
+                    &mut state.rng,
+                    entity_id_counter,
+                    &right,
+                    None,
+                    None,
+                ));
+            }
+            RoomType::Mystery => {}
+            RoomType::Item => {
+                let mut left = rect.center(pos);
+                left.x -= 2;
+
+                let mut right = rect.center(pos);
+                right.x += 2;
+
+                entities.push(create_item(
+                    &mut state.rng,
+                    entity_id_counter,
+                    &rect.center(pos),
+                    None,
+                    Some(0),
+                ));
+                // entities.push(create_item(&mut state.rng, entity_id_counter, &left, Item::Glasses, 0));
+                // entities.push(create_item(&mut state.rng, entity_id_counter, &right, Item::Glasses, 0));
+            }
         }
     }
 

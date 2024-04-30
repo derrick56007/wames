@@ -6,7 +6,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use components::{Item, Position, DIRECTIONS};
+use components::{ Position, DIRECTIONS};
 use device_query::{DeviceQuery, Keycode};
 use entity::new_entity;
 use event::Event;

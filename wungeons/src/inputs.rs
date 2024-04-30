@@ -1,16 +1,24 @@
 use std::{
-    collections::{HashMap, HashSet}, io::{stdout, Write}, process, thread::sleep, time::Duration
+    collections::{HashMap, HashSet},
+    io::{stdout, Write},
+    process,
+    thread::sleep,
+    time::Duration,
 };
 
 use device_query::{DeviceQuery, Keycode};
 use wurdle::{play, wurdle_words};
 
 use crate::{
-    components::{Component, Item, Position, DIRECTIONS},
-    create::{create_floor, create_fog, create_item, create_revealed_floor, PLAYER_WALK_COOLDOWN},
+    components::{Component, Position, DIRECTIONS},
+    create::{
+        create_dialogue, create_floor, create_fog, create_item, create_revealed_floor,
+        PLAYER_WALK_COOLDOWN,
+    },
     entity::add_entity,
-    event::Event,
+    event::{random_name, Event},
     get_component,
+    items::{get_item_description, Item},
     state::State,
 };
 
@@ -18,6 +26,11 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
     let entities = state
         .component_map
         .get(components)
+        .unwrap_or(&HashSet::new())
+        .clone();
+    let player_entities = state
+        .component_map
+        .get(&vec![Component::Player])
         .unwrap_or(&HashSet::new())
         .clone();
     let minion_entities = state
@@ -128,10 +141,10 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
     //     }
     // }
     // state.last_pressed_key = Some(HashSet::from_iter(keys.clone()));
-        // if dialogue_entities.is_empty() {
-        //     print!("\\e[?25l");
-        //     stdout().flush().unwrap();
-        // }
+    // if dialogue_entities.is_empty() {
+    //     print!("\\e[?25l");
+    //     stdout().flush().unwrap();
+    // }
     'outer: for key in keys.iter() {
         // if *key == Keycode::F {
 
@@ -168,7 +181,7 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                                 match event {
                                     Event::CreateName(_) => {
                                         if state.dialogue_input.trim().is_empty() {
-                                            state.dialogue_input = "thorin".to_string();
+                                            state.dialogue_input = random_name(&mut state.rng);
                                         }
                                     }
                                     _ => {}
@@ -218,6 +231,14 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
             }
 
             break 'outer;
+        }
+
+        // TODO needed?
+        if !dialogue_entities.is_empty() {
+            state.set_component(
+                *player_entities.iter().next().unwrap(),
+                Component::Cooldown(Some(0)),
+            );
         }
 
         for e in entities.iter() {
@@ -310,14 +331,17 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                                             .unwrap();
                                     add_entity(
                                         create_item(
+                                            &mut state.rng,
                                             &mut state.entity_id_counter,
                                             &new_position,
-                                            drop,
+                                            Some(drop),
+                                            Some(0),
                                         ),
                                         state,
                                     );
                                 }
                                 if is_boss {
+                                    state.floor += 1;
                                     state.events.push(Event::GameStart);
                                 }
                                 // for c in word.chars() {
@@ -335,8 +359,61 @@ pub fn handle_inputs(state: &mut State, components: &[Component]) {
                         } else if item_entities.contains(&hit) {
                             let item =
                                 get_component!(&state.entities_map[&hit], Component::Item).unwrap();
-                            state.items.push(item);
-                            state.remove_entity(hit);
+
+                            if state.entities_map[&hit]
+                                .contains_component(&Component::Paywall(None))
+                            {
+                                let paywall =
+                                    get_component!(&state.entities_map[&hit], Component::Paywall)
+                                        .unwrap();
+
+                                if paywall > 0 {
+                                    let mut dialogue = vec![(
+                                        format!("Buy {:?} for {}g?\n", item.clone(), paywall),
+                                        None,
+                                    )];
+                                    dialogue.extend(get_item_description(&item));
+
+                                    add_entity(
+                                        create_dialogue(
+                                            &mut state.entity_id_counter,
+                                            dialogue,
+                                            vec![
+                                                (
+                                                    "y".into(),
+                                                    Event::BuyItem((hit, item, paywall, *e)),
+                                                ),
+                                                ("n".into(), Event::None),
+                                            ],
+                                            Position::ZERO,
+                                        ),
+                                        state,
+                                    );
+                                } else {
+                                    let mut dialogue =
+                                        vec![(format!("Pick up {:?}?\n", item.clone()), None)];
+                                    dialogue.extend(get_item_description(&item));
+                                    add_entity(
+                                        create_dialogue(
+                                            &mut state.entity_id_counter,
+                                            dialogue,
+                                            vec![
+                                                (
+                                                    "y".into(),
+                                                    Event::BuyItem((hit, item, paywall, *e)),
+                                                ),
+                                                ("n".into(), Event::None),
+                                            ],
+                                            Position::ZERO,
+                                        ),
+                                        state,
+                                    );
+                                }
+                            } else {
+                                state.items.push(item);
+                                state.remove_entity(hit);
+                            }
+
                             break 'outer;
                         } else if door_entities.contains(&hit) {
                             // let item = get_component!(
