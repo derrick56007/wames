@@ -221,7 +221,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                     );
                 }
                 Event::Refresh => {
-                    state.refresh();
+                    state.refresh_tiles();
                 }
                 Event::GameStart => {
                     // remove all entities

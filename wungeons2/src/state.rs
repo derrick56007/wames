@@ -78,11 +78,11 @@ impl State {
             floor: 1,
             mods: AllModifiers::default(),
         };
-        n.refresh();
+        n.refresh_tiles();
         n
     }
 
-    pub fn refresh(&mut self) {
+    pub fn refresh_tiles(&mut self) {
         let available_letters: HashSet<char> =
             HashSet::from_iter("aerotlisncuyd".to_uppercase().chars());
         let mut letters_remaining = "abcdefghijklmnopqrstuvwxyz".to_uppercase().to_string();
