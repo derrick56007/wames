@@ -1,8 +1,6 @@
-use std::{
-    collections::{HashSet},
-};
+use std::collections::HashSet;
 
-use components::{ Position};
+use components::Position;
 // use device_query::{DeviceQuery, Keycode};
 
 use event::Event;
@@ -10,13 +8,11 @@ use event::Event;
 use render::bresenham;
 // use rooms::{create_floor, create_item};
 
-
 use crate::{
     components::{self, Component},
-    create::{BLACK},
+    create::BLACK,
     entity::{self},
-    event, get_component,
-    render,
+    event, get_component, render,
     state::State,
 };
 
@@ -41,13 +37,13 @@ pub fn sight(state: &mut State, components: &[Component]) {
         .collect::<Vec<Position>>();
 
     for f in fog_entities.iter() {
-        let fog = get_component!(state.entities_map[f], Component::Fog).unwrap();
+        let visited = get_component!(state.entities_map[f], Component::Fog).unwrap();
         if state.fog_enabled {
-            match fog {
+            match visited {
                 true => {
                     state.set_component(
                         *f,
-                        Component::Render(Some(("█".to_string(), (55,55,55)))),
+                        Component::Render(Some(("█".to_string(), (55, 55, 55)))),
                     );
                 }
                 _ => {
@@ -58,92 +54,27 @@ pub fn sight(state: &mut State, components: &[Component]) {
             state.set_component(*f, Component::Render(None));
         }
     }
-    
+
     for viewer in viewers {
         let view_distance =
             get_component!(state.entities_map[&viewer], Component::ViewDistance).unwrap();
 
         let viewer_pos = get_component!(state.entities_map[&viewer], Component::Position).unwrap();
         let mut seen_positions = HashSet::new();
-        for (rect, pos, _) in &state.rooms {
-            for x in pos.x..pos.x + rect.width {
-                for p in bresenham(&viewer_pos, &Position { x, y: pos.y })
+        for y in 0..state.grid_size.height {
+            for x in 0..state.grid_size.width {
+                let pos = Position { x, y };
+                'inner:
+                for p in bresenham(&viewer_pos, &pos)
                     .iter()
                     .copied()
                     .take(view_distance)
                 {
                     if solid_positions.contains(&p) {
-                        break;
+                        break 'inner;
                     }
                     seen_positions.insert(p);
                 }
-                for p in bresenham(
-                    &viewer_pos,
-                    &Position {
-                        x,
-                        y: pos.y + rect.height,
-                    },
-                )
-                .iter()
-                .copied()
-                .take(view_distance)
-                {
-                    if solid_positions.contains(&p) {
-                        break;
-                    }
-                    seen_positions.insert(p);
-                }
-            }
-
-            for y in pos.y..pos.y + rect.height {
-                for p in bresenham(&viewer_pos, &Position { x: pos.x, y })
-                    .iter()
-                    .copied()
-                    .take(view_distance)
-                {
-                    if solid_positions.contains(&p) {
-                        break;
-                    }
-                    seen_positions.insert(p);
-                }
-                for p in bresenham(
-                    &viewer_pos,
-                    &Position {
-                        x: pos.x + rect.width,
-                        y,
-                    },
-                )
-                .iter()
-                .copied()
-                .take(view_distance)
-                {
-                    if solid_positions.contains(&p) {
-                        break;
-                    }
-                    seen_positions.insert(p);
-                }
-            }
-        }
-        for (pos1, pos2) in &state.hallways {
-            for p in bresenham(&viewer_pos, pos1)
-                .iter()
-                .copied()
-                .take(view_distance)
-            {
-                if solid_positions.contains(&p) {
-                    break;
-                }
-                seen_positions.insert(p);
-            }
-            for p in bresenham(&viewer_pos, pos2)
-                .iter()
-                .copied()
-                .take(view_distance)
-            {
-                if solid_positions.contains(&p) {
-                    break;
-                }
-                seen_positions.insert(p);
             }
         }
 
@@ -204,7 +135,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
                                 // },
                     }
                     state.set_component(*f, Component::Render(None));
-                } 
+                }
             }
         }
     }
