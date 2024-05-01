@@ -17,7 +17,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                 get_component!(state.entities_map[e], Component::ZIndex).unwrap(),
             )
         })
-        .collect::<Vec<(usize, usize)>>();
+        .collect::<Vec<(usize, isize)>>();
     entities.sort_by(|a, b| a.1.cmp(&b.1));
 
     for (e, z) in &entities {
@@ -26,7 +26,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
             break;
         }
         let dialogue: (
-            Vec<(String, Option<(Option<(u8, u8, u8)>, Option<(u8, u8, u8)>)>)>,
+            Vec<(String, Option<(Option<(u8, u8, u8, u8)>, Option<(u8, u8, u8, u8)>)>)>,
             Vec<(String, Event)>,
         ) = get_component!(state.entities_map[e], Component::Dialogue).unwrap();
         let pos = get_component!(state.entities_map[e], Component::Position).unwrap();
@@ -55,7 +55,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                                 x: pos.x + x,
                                 y: pos.y + y,
                             })),
-                            Component::ZIndex(Some(*z)),
+                            Component::ZIndex(Some(*z as isize)),
                             render_c,
                             Component::DialogueChar,
                         ],
@@ -82,7 +82,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                                 x: pos.x + x,
                                 y: pos.y + y,
                             })),
-                            Component::ZIndex(Some(*z)),
+                            Component::ZIndex(Some(*z as isize)),
                             Component::Render(Some((c.to_string(), WHITE))),
                             Component::DialogueChar,
                         ],
@@ -102,7 +102,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                             x: pos.x + x,
                             y: pos.y + y,
                         })),
-                        Component::ZIndex(Some(*z)),
+                        Component::ZIndex(Some(*z as isize)),
                         Component::Render(Some(('/'.to_string(), WHITE))),
                         Component::DialogueChar,
                     ],

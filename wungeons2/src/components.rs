@@ -138,15 +138,15 @@ pub enum Component {
     Room,
     Door,
     Position(Option<Position>),
-    Render(Option<(String, (u8, u8, u8))>),
-    BackgroundColor(Option<(u8, u8, u8)>),
-    ZIndex(Option<usize>),
+    Render(Option<(String, (u8, u8, u8, u8))>),
+    BackgroundColor(Option<(u8, u8, u8, u8)>),
+    ZIndex(Option<isize>),
     Player,
     Drop(Option<Item>),
     Item(Option<Item>),
     Fog(Option<bool>),
     Solid,
-    Dialogue(Option<(Vec<(String, Option<(Option<(u8, u8, u8)>, Option<(u8, u8, u8)>)>)>, Vec<(String, Event)>)>),
+    Dialogue(Option<(Vec<(String, Option<(Option<(u8, u8, u8, u8)>, Option<(u8, u8, u8, u8)>)>)>, Vec<(String, Event)>)>),
     DialogueChar,
     Activated(Option<bool>),
     Cooldown(Option<usize>),
@@ -157,6 +157,7 @@ pub enum Component {
     SecretWallHint,
     Paywall(Option<usize>),
     Mystery,
+    Invisible(Option<bool>)
 }
 
 // #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -193,5 +194,6 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::Paywall(_) => Component::Paywall(None),
         Component::BackgroundColor(_) => Component::BackgroundColor(None),
         Component::Mystery => Component::Mystery,
+        Component::Invisible(_) => Component::Invisible(None),
     }
 }

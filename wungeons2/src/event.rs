@@ -201,7 +201,7 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                             &mut state.entity_id_counter,
                             vec![
                                 ("Welcome to ".to_string(), None),
-                                ("WUNGEON".to_string(), Some((None, Some((255, 0, 0))))),
+                                ("WUNGEON".to_string(), Some((None, Some((255, 0, 0, 255))))),
                                 ("!\n\n(press any key to continue)".to_string(), None),
                             ],
                             vec![],

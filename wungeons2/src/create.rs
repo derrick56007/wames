@@ -2,10 +2,12 @@
 use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
-    components::{Component, Position}, effects::{get_effect_description, get_random_effect, Effect}, entity::{new_entity, Entity}, event::Event, items::{
-         get_item_char, get_item_cost,  get_random_item,
-        Item,
-    }, sight::ViewType
+    components::{Component, Position},
+    effects::{get_effect_description, get_random_effect, Effect},
+    entity::{new_entity, Entity},
+    event::Event,
+    items::{get_item_char, get_item_cost, get_random_item, Item},
+    sight::ViewType,
 };
 
 pub fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
@@ -14,8 +16,10 @@ pub fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity
         vec![
             Component::Wall,
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█'.to_string(), BLACK))),
-            Component::ZIndex(Some(0)),
+            Component::Render(Some(('█'.to_string(), (50, 50, 50, 255)))),
+            Component::BackgroundColor(Some((40, 40, 40, 255))),
+            Component::ZIndex(Some(1)),
+            Component::Invisible(Some(true)),
             Component::Solid,
         ],
     )
@@ -78,8 +82,10 @@ pub fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position) -> Entit
         vec![
             // Component::Wall,
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█'.to_string(), BG_COLOR))),
-            Component::ZIndex(Some(0)),
+            Component::Render(Some((' '.to_string(), (0, 0, 0, 0)))),
+            Component::BackgroundColor(Some(BG_COLOR)),
+            Component::ZIndex(Some(-1)),
+            Component::Invisible(Some(true))
             // Component::Fog(Some(FogState::Dark))
         ],
     )
@@ -91,7 +97,9 @@ pub fn create_revealed_floor(entity_id_counter: &mut usize, wall_pos: &Position)
         vec![
             // Component::Wall,
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█'.to_string(), REVEALED_BG_COLOR))),
+            Component::Render(Some((' '.to_string(), (0, 0, 0, 0)))),
+            Component::BackgroundColor(Some(REVEALED_BG_COLOR)),
+
             Component::ZIndex(Some(1)),
             // Component::Fog(Some(FogState::Dark))
         ],
@@ -184,11 +192,11 @@ pub fn create_item(
 
 pub const PLAYER_WALK_COOLDOWN: usize = 5;
 pub const PLAYER_VIEW_DISTANCE: usize = 9;
-pub const BG_COLOR: (u8, u8, u8) = (78, 54, 42);
-pub const REVEALED_BG_COLOR: (u8, u8, u8) = (61, 43, 31);
-pub const WHITE: (u8, u8, u8) = (255, 255, 255);
-pub const BLACK: (u8, u8, u8) = (0, 0, 0);
-pub const GOLD: (u8, u8, u8) = (218, 145, 1);
+pub const BG_COLOR: (u8, u8, u8, u8) = (78, 54, 42, 255);
+pub const REVEALED_BG_COLOR: (u8, u8, u8, u8) = (61, 43, 31, 255);
+pub const WHITE: (u8, u8, u8, u8) = (255, 255, 255, 255);
+pub const BLACK: (u8, u8, u8, u8) = (0, 0, 0, 255);
+pub const GOLD: (u8, u8, u8, u8) = (218, 145, 1, 255);
 
 pub fn create_player(entity_id_counter: &mut usize, pos: Position) -> Entity {
     new_entity(
@@ -229,10 +237,22 @@ pub fn create_mystery_dialogue(entity_id_counter: &mut usize, rng: &mut ThreadRn
         .collect();
     let dialogue = vec![
         ("A whisper comes from the haze..\n".to_string(), None),
-        ("I can grant you one of three wishes..\n\n".to_string(), None),
-        ((format!("1) {}\n", get_effect_description(&effects[0]).to_string()), None)),
-        ((format!("2) {}\n", get_effect_description(&effects[1]).to_string()), None)),
-        ((format!("3) {}\n", get_effect_description(&effects[2]).to_string()), None)),
+        (
+            "I can grant you one of three wishes..\n\n".to_string(),
+            None,
+        ),
+        ((
+            format!("1) {}\n", get_effect_description(&effects[0]).to_string()),
+            None,
+        )),
+        ((
+            format!("2) {}\n", get_effect_description(&effects[1]).to_string()),
+            None,
+        )),
+        ((
+            format!("3) {}\n", get_effect_description(&effects[2]).to_string()),
+            None,
+        )),
     ];
     let index = *entity_id_counter;
 
@@ -242,14 +262,17 @@ pub fn create_mystery_dialogue(entity_id_counter: &mut usize, rng: &mut ThreadRn
             Component::Activated(Some(false)),
             Component::Dialogue(Some((dialogue, options))),
             Component::Position(Some(Position::ZERO)),
-            Component::ZIndex(Some(index + 5)),
+            Component::ZIndex(Some((index as isize) + 5)),
         ],
     )
 }
 
 pub fn create_dialogue(
     entity_id_counter: &mut usize,
-    dialogue: Vec<(String, Option<(Option<(u8, u8, u8)>, Option<(u8, u8, u8)>)>)>,
+    dialogue: Vec<(
+        String,
+        Option<(Option<(u8, u8, u8, u8)>, Option<(u8, u8, u8, u8)>)>,
+    )>,
     options: Vec<(String, Event)>,
     pos: Position,
 ) -> Entity {
@@ -261,7 +284,7 @@ pub fn create_dialogue(
             Component::Activated(Some(false)),
             Component::Dialogue(Some((dialogue, options))),
             Component::Position(Some(pos)),
-            Component::ZIndex(Some(index + 5)),
+            Component::ZIndex(Some((index as isize) + 5)),
         ],
     )
 }

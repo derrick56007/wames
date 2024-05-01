@@ -1,5 +1,3 @@
-
-
 use crate::{
     components::Component,
     dialogue::dialogue,
@@ -9,7 +7,6 @@ use crate::{
 };
 
 pub fn start_up(state: &mut State, _components: &[Component]) {
-
     state.events.push(Event::Welcome);
 }
 
@@ -48,6 +45,11 @@ pub fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)
                 Component::Render(None),
                 Component::ZIndex(None),
             ],
+            false,
+        ),
+        (
+            dummy,
+            vec![Component::Invisible(None), Component::Position(None)],
             false,
         ),
     ]

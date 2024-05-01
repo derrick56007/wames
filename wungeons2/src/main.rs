@@ -121,20 +121,37 @@ async fn run() {
                 ],
                 &mut buffers,
             );
-            let text_areas = buffers.iter().map(|(buffer, position, color)| TextArea {
-                buffer,
-                left: (position.x * TILE_WIDTH) as f32,
-                top: (position.y * TILE_HEIGHT) as f32,
-                scale: 1.0,
-                bounds: TextBounds {
-                    left: (position.x * TILE_WIDTH) as i32,
-                    top: (position.y * TILE_HEIGHT) as i32,
-                    right: ((position.x + TILE_WIDTH) * TILE_WIDTH) as i32,
-                    bottom: ((position.y + TILE_HEIGHT) * TILE_HEIGHT) as i32,
-                },
+            let text_areas = buffers
+                .iter_mut()
+                .map(|(buffer, position, color, shift_up)| {
+                    // position.x += 1;
+                    let mut shift = 0.0;
+                    if *shift_up {
+                        shift = -TILE_HEIGHT as f32 / 2.0;
+                    }
+                    TextArea {
+                        buffer,
+                        left: (position.x * TILE_WIDTH) as f32,
+                        top: (position.y * TILE_HEIGHT) as f32 + shift,
+                        scale: 1.0,
+                        bounds: {
+                            let mut bounds = TextBounds {
+                                left: ((position.x - 1) * TILE_WIDTH) as i32,
+                                top: ((position.y - 1) * TILE_HEIGHT) as i32,
+                                right: ((position.x + TILE_WIDTH + 1) * TILE_WIDTH) as i32,
+                                bottom: ((position.y + TILE_HEIGHT + 1) * TILE_HEIGHT) as i32,
+                            };
 
-                default_color: Color::rgb(color.0, color.1, color.2),
-            });
+                            if *shift_up {
+                                // bounds.top -= TILE_HEIGHT  / ;
+                            }
+
+                            bounds
+                        },
+
+                        default_color: Color::rgba(color.0, color.1, color.2, color.3),
+                    }
+                });
 
             text_renderer
                 .prepare(
@@ -215,7 +232,13 @@ async fn run() {
                         } => match (physical_key, state) {
                             (PhysicalKey::Code(code), ElementState::Pressed) => {
                                 // g.window.request_redraw();
-                                handle_inputs(&mut g.game.state, &[Component::Player], Some(*code), *repeat, text.clone())
+                                handle_inputs(
+                                    &mut g.game.state,
+                                    &[Component::Player],
+                                    Some(*code),
+                                    *repeat,
+                                    text.clone(),
+                                )
                             }
                             (_, _) => {}
                         },
@@ -379,6 +402,7 @@ use crate::{
 mod components;
 mod create;
 mod dialogue;
+mod effects;
 mod entity;
 mod event;
 mod inputs;
@@ -388,7 +412,6 @@ mod rooms;
 mod sight;
 mod state;
 mod systems;
-mod effects;
 
 use crate::render::render;
 

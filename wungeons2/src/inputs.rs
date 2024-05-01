@@ -77,7 +77,7 @@ pub fn handle_inputs(
                 get_component!(state.entities_map[e], Component::ZIndex).unwrap(),
             )
         })
-        .collect::<Vec<(usize, usize)>>();
+        .collect::<Vec<(usize, isize)>>();
     let mut step_count_entities = state
         .component_map
         .get(&vec![Component::StepCount(None)])

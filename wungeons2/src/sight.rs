@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use components::Position;
 // use device_query::{DeviceQuery, Keycode};
@@ -27,7 +27,20 @@ pub fn sight(state: &mut State, components: &[Component]) {
     let fog_entities = state.get_entities(components).clone();
     let viewers = state.get_entities(&[Component::ViewDistance(None)]).clone();
     let viewables = state.get_entities(&[Component::Viewable(None)]).clone();
-
+    let invisible_positions = state
+        .get_entities(&[Component::Invisible(None), Component::Position(None)])
+        .clone();
+    let invisible_positions: HashMap<Position, usize> = HashMap::from_iter(
+        invisible_positions
+            .iter()
+            .map(|e| {
+                (
+                    get_component!(state.entities_map[e], Component::Position).unwrap(),
+                    *e,
+                )
+            })
+            .collect::<Vec<(Position, usize)>>(),
+    );
     let solid_positions = state
         .get_entities(&[Component::Position(None), Component::Solid])
         .clone();
@@ -43,7 +56,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
                 true => {
                     state.set_component(
                         *f,
-                        Component::Render(Some(("█".to_string(), (55, 55, 55)))),
+                        Component::Render(Some(("█".to_string(), (55, 55, 55, 255)))),
                     );
                 }
                 _ => {
@@ -55,6 +68,12 @@ pub fn sight(state: &mut State, components: &[Component]) {
         }
     }
 
+    // if !state.fog_enabled {
+    //     for (_, p) in &invisible_positions {
+    //         state.set_component(*p, Component::Invisible(Some(false)))
+    //     }
+    // }
+
     for viewer in viewers {
         let view_distance =
             get_component!(state.entities_map[&viewer], Component::ViewDistance).unwrap();
@@ -64,12 +83,19 @@ pub fn sight(state: &mut State, components: &[Component]) {
         for y in 0..state.grid_size.height {
             for x in 0..state.grid_size.width {
                 let pos = Position { x, y };
-                'inner:
-                for p in bresenham(&viewer_pos, &pos)
+                'inner: for p in bresenham(&viewer_pos, &pos)
                     .iter()
                     .copied()
                     .take(view_distance)
                 {
+                    if state.entities_map[&viewer].contains_component(&Component::AffectsFog)
+                        && invisible_positions.contains_key(&p)
+                    {
+                        state.set_component(
+                            invisible_positions[&p],
+                            Component::Invisible(Some(false)),
+                        )
+                    }
                     if solid_positions.contains(&p) {
                         break 'inner;
                     }

@@ -82,7 +82,7 @@ pub fn get_random_item(rng: &mut ThreadRng) -> Item {
 
 pub fn get_item_description(
     item: &Item,
-) -> Vec<(String, Option<(Option<(u8, u8, u8)>, Option<(u8, u8, u8)>)>)> {
+) -> Vec<(String, Option<(Option<(u8, u8, u8, u8)>, Option<(u8, u8, u8, u8)>)>)> {
     match item {
         Item::Key => vec![("(unlocks doors)".into(), None)],
         Item::Glasses => vec![("(+1 hand)".into(), None)],

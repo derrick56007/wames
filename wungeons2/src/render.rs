@@ -1,5 +1,10 @@
 use crate::{
-    components::{Component, Position}, create::WHITE, get_component, items::get_item_char, state::State, TILE_HEIGHT, TILE_WIDTH
+    components::{Component, Position},
+    create::WHITE,
+    get_component,
+    items::get_item_char,
+    state::State,
+    TILE_HEIGHT, TILE_WIDTH,
 };
 
 const COLORS: [(&str, &str); 17] = [
@@ -52,7 +57,7 @@ pub fn render(
     scale_factor: f64,
     state: &mut State,
     components: &[Component],
-    buffers: &mut Vec<(Buffer, Position, (u8, u8, u8))>,
+    buffers: &mut Vec<(Buffer, Position, (u8, u8, u8, u8), bool)>,
 ) {
     let entities = state.get_entities(components);
     let mut entities = entities
@@ -60,15 +65,25 @@ pub fn render(
         .map(|e| {
             (
                 *e,
-                get_component!(state.entities_map[e], Component::ZIndex).unwrap(),
+                (
+                    get_component!(state.entities_map[e], Component::ZIndex).unwrap(),
+                    get_component!(state.entities_map[e], Component::Position)
+                        .unwrap()
+                        .y,
+                ),
             )
         })
-        .collect::<Vec<(usize, usize)>>();
+        .collect::<Vec<(usize, (isize, isize))>>();
     entities.sort_by(|a, b| a.1.cmp(&b.1));
 
     for (e, _) in entities.iter() {
         let entity = &e;
 
+        if state.fog_enabled &&  state.entities_map[entity].contains_component(&Component::Invisible(None)) {
+            if get_component!(state.entities_map[entity], Component::Invisible).unwrap() {
+                continue;
+            }
+        }
         let position = get_component!(state.entities_map[entity], Component::Position).unwrap();
 
         if let Some((render_char, fg_color)) =
@@ -82,14 +97,30 @@ pub fn render(
                         create_buffer('█'.to_string(), font_system),
                         position,
                         bg_color,
+                        false,
                     ));
                 }
             }
+        }
+    }
 
+    for (e, _) in entities.iter() {
+        let entity = &e;
+
+        if state.fog_enabled && state.entities_map[entity].contains_component(&Component::Invisible(None)) {
+            if get_component!(state.entities_map[entity], Component::Invisible).unwrap() {
+                continue;
+            }
+        }
+        let position = get_component!(state.entities_map[entity], Component::Position).unwrap();
+        if let Some((render_char, fg_color)) =
+            get_component!(state.entities_map[entity], Component::Render)
+        {
             buffers.push((
                 create_buffer(render_char.to_string(), font_system),
                 position,
                 fg_color,
+                !state.entities_map[entity].contains_component(&Component::DialogueChar),
             ));
         }
     }
@@ -102,6 +133,7 @@ pub fn render(
                 y: state.grid_size.height,
             },
             WHITE,
+            false,
         ));
     }
 
@@ -135,6 +167,7 @@ pub fn render(
                     y: i as isize,
                 },
                 WHITE,
+                false,
             ));
         }
     }
