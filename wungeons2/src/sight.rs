@@ -88,8 +88,8 @@ pub fn sight(state: &mut State, components: &[Component]) {
                     .copied()
                     .take(view_distance)
                 {
-                    if state.entities_map[&viewer].contains_component(&Component::AffectsFog)
-                        && invisible_positions.contains_key(&p)
+                    if invisible_positions.contains_key(&p)
+                        && state.entities_map[&viewer].contains_component(&Component::AffectsFog)
                     {
                         state.set_component(
                             invisible_positions[&p],
