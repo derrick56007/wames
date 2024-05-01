@@ -1,9 +1,5 @@
 use crate::{
-    components::{Component, Position},
-    create::WHITE,
-    get_component,
-    state::State,
-    TILE_HEIGHT, TILE_WIDTH,
+    components::{Component, Position}, create::WHITE, get_component, items::get_item_char, state::State, TILE_HEIGHT, TILE_WIDTH
 };
 
 const COLORS: [(&str, &str); 17] = [
@@ -110,15 +106,27 @@ pub fn render(
     }
 
     if state.show_deck {
-        let additional_post: Vec<String> = vec![
+        let mut additional_post: Vec<String> = vec![
             "┏━━━━━━━━━━━━━┓".into(),
             format!("┃ Words: {: >4} ┃", 5),
             format!("┃ Gold : {: >4} ┃", state.gold),
             format!("┃ Floor: {: >4} ┃", state.floor),
             "┗━━━━━━━━━━━━━┛".into(),
-            // "┏━━━━TILES━━━━┓".to_string(),
+            "┏━━━━TILES━━━━┓".to_string(),
             // // "┃             ┃".to_string(),
+            "┗━━━━━━━━━━━━━┛".into(),
+            "┏━━━━ITEMS━━━━┓".to_string(),
         ];
+        if !state.items.is_empty() {
+            for chunk in state.items.chunks(5) {
+                let mut s = " ".to_string();
+                for c in chunk {
+                    s = format!("{s} {}", get_item_char(c));
+                }
+                additional_post.push(s);
+            }
+        }
+        additional_post.push("┗━━━━━━━━━━━━━┛".into());
         for (i, line) in additional_post.iter().enumerate() {
             buffers.push((
                 create_buffer(line.to_string(), font_system),

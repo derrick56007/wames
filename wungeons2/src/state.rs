@@ -8,7 +8,7 @@ use rand::{rngs::ThreadRng, Rng};
 
 
 use crate::{
-    components::{get_default_component, Component,  Position, Rect}, entity::Entity, event::Event, items::Item, rooms::RoomType
+    components::{get_default_component, Component,  Position, Rect}, effects::AllModifiers, entity::Entity, event::Event, items::Item, rooms::RoomType
 };
 
 pub struct State {
@@ -37,6 +37,7 @@ pub struct State {
     empty_entites_set: HashSet<usize>,
     pub show_deck: bool,
     pub floor: usize,
+    pub mods: AllModifiers,
     // pub step_counter: usize,
     // pub systems: Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>,
 }
@@ -75,6 +76,7 @@ impl State {
             name: "".to_string(),
             empty_entites_set: HashSet::new(),
             floor: 1,
+            mods: AllModifiers::default(),
         };
         n.refresh();
         n
@@ -164,5 +166,9 @@ impl State {
         for e in entities {
             self.remove_entity(e);
         }
+    }
+
+    pub fn apply_modifiers(&mut self, modifiers: &mut AllModifiers) {
+        self.mods.add(modifiers);
     }
 }

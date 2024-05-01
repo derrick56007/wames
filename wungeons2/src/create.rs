@@ -2,7 +2,10 @@
 use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
-    components::{Component, Position}, entity::{new_entity, Entity}, event::Event, items::{get_item_char, get_item_cost, Item}, sight::ViewType
+    components::{Component, Position}, effects::{get_effect_description, get_random_effect, Effect}, entity::{new_entity, Entity}, event::Event, items::{
+         get_item_char, get_item_cost,  get_random_item,
+        Item,
+    }, sight::ViewType
 };
 
 pub fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity {
@@ -131,13 +134,32 @@ pub fn create_minion(
     new_entity(entity_id_counter, comps)
 }
 
-pub fn create_item(rng: &mut ThreadRng, entity_id_counter: &mut usize, pos: &Position, item: Option<Item>, cost: Option<usize>) -> Entity {
-    let items_list = [
-        Item::Glasses,
-        Item::Key,
+pub fn create_mystery(
+    rng: &mut ThreadRng,
+    entity_id_counter: &mut usize,
+    pos: &Position,
+) -> Entity {
+    let comps = vec![
+        Component::Position(Some(*pos)),
+        Component::Render(Some(('?'.into(), BLACK))),
+        Component::ZIndex(Some(4)),
+        Component::Mystery,
     ];
+    // if cost > 0 {
+    //     comps.push(Component::Paywall(Some(cost)));
+    // }
+    new_entity(entity_id_counter, comps)
+}
+
+pub fn create_item(
+    rng: &mut ThreadRng,
+    entity_id_counter: &mut usize,
+    pos: &Position,
+    item: Option<Item>,
+    cost: Option<usize>,
+) -> Entity {
     let item = if item.is_none() {
-        items_list[rng.gen::<usize>() % items_list.len()].clone()
+        get_random_item(rng)
     } else {
         item.unwrap()
     };
@@ -146,29 +168,24 @@ pub fn create_item(rng: &mut ThreadRng, entity_id_counter: &mut usize, pos: &Pos
     } else {
         cost.unwrap()
     };
-    
+
     let comps = vec![
         Component::Position(Some(*pos)),
         Component::Render(Some((get_item_char(&item), GOLD))),
         Component::ZIndex(Some(4)),
         Component::Item(Some(item)),
-        Component::Paywall(Some(cost))
+        Component::Paywall(Some(cost)),
     ];
     // if cost > 0 {
     //     comps.push(Component::Paywall(Some(cost)));
     // }
-    new_entity(
-        entity_id_counter,
-        comps,
-    )
+    new_entity(entity_id_counter, comps)
 }
 
 pub const PLAYER_WALK_COOLDOWN: usize = 5;
 pub const PLAYER_VIEW_DISTANCE: usize = 9;
-pub const BG_COLOR: (u8, u8, u8) 
-= (78,54,42);
-pub const REVEALED_BG_COLOR: (u8, u8, u8) 
-= (61,43,31);
+pub const BG_COLOR: (u8, u8, u8) = (78, 54, 42);
+pub const REVEALED_BG_COLOR: (u8, u8, u8) = (61, 43, 31);
 pub const WHITE: (u8, u8, u8) = (255, 255, 255);
 pub const BLACK: (u8, u8, u8) = (0, 0, 0);
 pub const GOLD: (u8, u8, u8) = (218, 145, 1);
@@ -186,6 +203,46 @@ pub fn create_player(entity_id_counter: &mut usize, pos: Position) -> Entity {
             Component::AffectsFog,
             Component::ViewDistance(Some(PLAYER_VIEW_DISTANCE)),
             Component::Viewable(Some((ViewType::Player, vec![]))),
+        ],
+    )
+}
+
+pub fn create_mystery_dialogue(entity_id_counter: &mut usize, rng: &mut ThreadRng) -> Entity {
+    let mut effects: Vec<Effect> = vec![];
+
+    loop {
+        if effects.len() == 3 {
+            break;
+        }
+        let effect = get_random_effect(rng);
+
+        if effects.contains(&effect) {
+            continue;
+        }
+
+        effects.push(effect);
+    }
+    let options: Vec<(String, Event)> = effects
+        .iter()
+        .enumerate()
+        .map(|(i, e)| (format!("{}", i + 1), Event::UseEffect(e.clone())))
+        .collect();
+    let dialogue = vec![
+        ("A whisper comes from the haze..\n".to_string(), None),
+        ("I can grant you one of three wishes..\n\n".to_string(), None),
+        ((format!("1) {}\n", get_effect_description(&effects[0]).to_string()), None)),
+        ((format!("2) {}\n", get_effect_description(&effects[1]).to_string()), None)),
+        ((format!("3) {}\n", get_effect_description(&effects[2]).to_string()), None)),
+    ];
+    let index = *entity_id_counter;
+
+    new_entity(
+        entity_id_counter,
+        vec![
+            Component::Activated(Some(false)),
+            Component::Dialogue(Some((dialogue, options))),
+            Component::Position(Some(Position::ZERO)),
+            Component::ZIndex(Some(index + 5)),
         ],
     )
 }

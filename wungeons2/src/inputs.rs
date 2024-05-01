@@ -5,15 +5,14 @@ use std::{
     time::Duration,
 };
 
-use winit::keyboard::KeyCode;
+use winit::keyboard::{KeyCode, SmolStr};
 // use device_query::{DeviceQuery, KeyCode};
 use wurdle::{play, wurdle_words};
 
 use crate::{
     components::{Component, Position, DIRECTIONS},
     create::{
-        create_dialogue, create_fog, create_item, create_revealed_floor,
-        PLAYER_WALK_COOLDOWN,
+        create_dialogue, create_fog, create_item, create_revealed_floor, PLAYER_WALK_COOLDOWN,
     },
     entity::add_entity,
     event::{random_name, Event},
@@ -22,7 +21,13 @@ use crate::{
     state::State,
 };
 
-pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<KeyCode>, repeat: bool) {
+pub fn handle_inputs(
+    state: &mut State,
+    components: &[Component],
+    key: Option<KeyCode>,
+    repeat: bool,
+    text: Option<SmolStr>
+) {
     let entities = state
         .component_map
         .get(components)
@@ -36,6 +41,12 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
     let minion_entities = state
         .component_map
         .get(&vec![Component::Minion(None)])
+        .unwrap_or(&HashSet::new())
+        .clone();
+
+    let mystery_entities = state
+        .component_map
+        .get(&vec![Component::Mystery])
         .unwrap_or(&HashSet::new())
         .clone();
     let item_entities = state
@@ -102,34 +113,35 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
     // 'outer: loop {
     // let keys: Vec<KeyCode> = state.device_state.get_keys();
     // let mut pressed_key: Option<KeyCode> = None;
-    let key_map: HashMap<KeyCode, char> = HashMap::from_iter([
-        (KeyCode::KeyA, 'a'),
-        (KeyCode::KeyB, 'b'),
-        (KeyCode::KeyC, 'c'),
-        (KeyCode::KeyD, 'd'),
-        (KeyCode::KeyE, 'e'),
-        (KeyCode::KeyF, 'f'),
-        (KeyCode::KeyG, 'g'),
-        (KeyCode::KeyH, 'h'),
-        (KeyCode::KeyI, 'i'),
-        (KeyCode::KeyJ, 'j'),
-        (KeyCode::KeyK, 'k'),
-        (KeyCode::KeyL, 'l'),
-        (KeyCode::KeyM, 'm'),
-        (KeyCode::KeyN, 'n'),
-        (KeyCode::KeyO, 'o'),
-        (KeyCode::KeyP, 'p'),
-        (KeyCode::KeyQ, 'q'),
-        (KeyCode::KeyR, 'r'),
-        (KeyCode::KeyS, 's'),
-        (KeyCode::KeyT, 't'),
-        (KeyCode::KeyU, 'u'),
-        (KeyCode::KeyV, 'v'),
-        (KeyCode::KeyW, 'w'),
-        (KeyCode::KeyX, 'x'),
-        (KeyCode::KeyY, 'y'),
-        (KeyCode::KeyZ, 'z'),
-    ]);
+    // let key_map: HashMap<KeyCode, char> = HashMap::from_iter([
+    //     ()
+    //     (KeyCode::KeyA, 'a'),
+    //     (KeyCode::KeyB, 'b'),
+    //     (KeyCode::KeyC, 'c'),
+    //     (KeyCode::KeyD, 'd'),
+    //     (KeyCode::KeyE, 'e'),
+    //     (KeyCode::KeyF, 'f'),
+    //     (KeyCode::KeyG, 'g'),
+    //     (KeyCode::KeyH, 'h'),
+    //     (KeyCode::KeyI, 'i'),
+    //     (KeyCode::KeyJ, 'j'),
+    //     (KeyCode::KeyK, 'k'),
+    //     (KeyCode::KeyL, 'l'),
+    //     (KeyCode::KeyM, 'm'),
+    //     (KeyCode::KeyN, 'n'),
+    //     (KeyCode::KeyO, 'o'),
+    //     (KeyCode::KeyP, 'p'),
+    //     (KeyCode::KeyQ, 'q'),
+    //     (KeyCode::KeyR, 'r'),
+    //     (KeyCode::KeyS, 's'),
+    //     (KeyCode::KeyT, 't'),
+    //     (KeyCode::KeyU, 'u'),
+    //     (KeyCode::KeyV, 'v'),
+    //     (KeyCode::KeyW, 'w'),
+    //     (KeyCode::KeyX, 'x'),
+    //     (KeyCode::KeyY, 'y'),
+    //     (KeyCode::KeyZ, 'z'),
+    // ]);
 
     // if key.is_none() {
     //     state.last_pressed_keys.clear();
@@ -224,13 +236,16 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
                 }
             }
             _ => {
-                if key_map.contains_key(key) {
-                    let st = key_map[key].to_string();
+                // if key_map.contains_key(key) {
+                    // let st = key_map[key].to_string();
                     // if keys.contains(&KeyCode::ShiftLeft) || keys.contains(&KeyCode::ShiftRight) {
                     //     st = st.to_uppercase().to_string();
                     // }
-                    state.dialogue_input = format!("{}{}", state.dialogue_input, st);
-                }
+                    if let Some(text) = text {
+
+                        state.dialogue_input = format!("{}{}", state.dialogue_input, text);
+                    }
+                // }
             }
         }
 
@@ -426,6 +441,20 @@ pub fn handle_inputs(state: &mut State, components: &[Component], key: Option<Ke
                         }
                         return;
                     } else if wall_entities.contains(&hit) {
+                        return;
+                    } else if mystery_entities.contains(&hit) {
+                        add_entity(
+                            create_dialogue(
+                                &mut state.entity_id_counter,
+                                vec![("See what is in the foggy haze?".into(), None)],
+                                vec![
+                                    ("y".into(), Event::CreateMystery(hit)),
+                                    ("n".into(), Event::None),
+                                ],
+                                Position::ZERO,
+                            ),
+                            state,
+                        );
                         return;
                     } else if secret_wall_entities.contains(&hit) {
                         let group =

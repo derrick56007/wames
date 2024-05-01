@@ -207,7 +207,7 @@ async fn run() {
                     match event {
                         KeyEvent {
                             physical_key,
-
+                            text,
                             state,
                             repeat,
                             // repeat: false,
@@ -215,7 +215,7 @@ async fn run() {
                         } => match (physical_key, state) {
                             (PhysicalKey::Code(code), ElementState::Pressed) => {
                                 // g.window.request_redraw();
-                                handle_inputs(&mut g.game.state, &[Component::Player], Some(*code), *repeat)
+                                handle_inputs(&mut g.game.state, &[Component::Player], Some(*code), *repeat, text.clone())
                             }
                             (_, _) => {}
                         },
@@ -388,6 +388,7 @@ mod rooms;
 mod sight;
 mod state;
 mod systems;
+mod effects;
 
 use crate::render::render;
 

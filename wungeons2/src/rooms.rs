@@ -10,8 +10,8 @@ use crate::{
         intersects, line_rect, Component, Position, Rect, DIAGONAL_DIRECTIONS, DIRECTIONS,
     },
     create::{
-        create_door, create_floor, create_fog, create_item, create_minion, create_secret_wall,
-        create_secret_wall_hint, create_wall, GOLD,
+        create_door, create_floor, create_fog, create_item, create_minion, create_mystery,
+        create_secret_wall, create_secret_wall_hint, create_wall, GOLD,
     },
     entity::{new_entity, Entity},
     items::Item,
@@ -152,9 +152,9 @@ pub fn create_rooms(
             },
         ));
     }
-    rooms[num_small_rooms + num_big_rooms - 1].2 = RoomType::Merchant;
-    rooms[num_small_rooms + num_big_rooms - 2].2 = RoomType::Mystery;
-    rooms[num_small_rooms + num_big_rooms - 3].2 = RoomType::Item;
+    rooms[num_small_rooms + num_big_rooms - 1].2 = RoomType::Mystery;
+    rooms[num_small_rooms + num_big_rooms - 2].2 = RoomType::Item;
+    rooms[num_small_rooms + num_big_rooms - 3].2 = RoomType::Merchant;
 
     resolve_collisions(&mut rooms, grid_size, rng, num_small_rooms);
 
@@ -400,7 +400,11 @@ pub fn create_rooms(
                     None,
                 ));
             }
-            RoomType::Mystery => {}
+            RoomType::Mystery => entities.push(create_mystery(
+                &mut state.rng,
+                entity_id_counter,
+                &rect.center(pos),
+            )),
             RoomType::Item => {
                 let mut left = rect.center(pos);
                 left.x -= 2;

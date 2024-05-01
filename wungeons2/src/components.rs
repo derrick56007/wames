@@ -156,6 +156,7 @@ pub enum Component {
     Viewable(Option<(ViewType, Vec<usize>)>),
     SecretWallHint,
     Paywall(Option<usize>),
+    Mystery,
 }
 
 // #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -191,5 +192,6 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::AffectsFog => Component::AffectsFog,
         Component::Paywall(_) => Component::Paywall(None),
         Component::BackgroundColor(_) => Component::BackgroundColor(None),
+        Component::Mystery => Component::Mystery,
     }
 }

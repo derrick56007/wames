@@ -1,14 +1,16 @@
-
-
 // use colored::Colorize;
 // use device_query::{DeviceQuery, Keycode};
 use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     components::{Component, Position},
-    create::{create_dialogue, create_player},
+    create::{create_dialogue, create_mystery_dialogue, create_player},
+    effects::{
+        get_all_modifiers_from_effects, get_effect_description, lowercase_first_letter,
+        AllModifiers, Effect,
+    },
     entity::{add_entity, new_entity},
-    items::{get_item_use_on_pickup, use_item, Item},
+    items::{get_item_effects, use_and_remove_item_on_pickup, Item},
     rooms::create_rooms,
     sight::ViewType,
     state::State,
@@ -28,6 +30,8 @@ pub enum Event {
 
     // id, item, cost, player
     BuyItem((usize, Item, usize, usize)),
+    CreateMystery(usize),
+    UseEffect(Effect),
 }
 
 pub fn game_events(state: &mut State, _components: &[Component]) {
@@ -38,10 +42,41 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
     loop {
         if let Some(event) = state.events.pop() {
             match event {
+                Event::UseEffect(effect) => {
+                    // let modifiers = use_item(&item, state);
+                    add_entity(
+                        create_dialogue(
+                            &mut state.entity_id_counter,
+                            vec![(
+                                format!(
+                                    "You {}",
+                                    lowercase_first_letter(&get_effect_description(&effect))
+                                ),
+                                None,
+                            )],
+                            vec![],
+                            Position::ZERO,
+                        ),
+                        state,
+                    );
+                    let mut mods = AllModifiers::default();
+                    get_all_modifiers_from_effects(
+                        &mut mods,
+                        vec![effect],
+                    );
+                    state.apply_modifiers(&mut mods);
+                }
+                Event::CreateMystery(id) => {
+                    state.remove_entity(id);
+                    add_entity(
+                        create_mystery_dialogue(&mut state.entity_id_counter, &mut state.rng),
+                        state,
+                    );
+                }
                 Event::BuyItem((e, item, cost, _player)) => {
                     if state.gold >= cost {
-                        state.items.push(item.clone());
                         state.remove_entity(e);
+                        state.gold -= cost;
 
                         if cost == 0 {
                             add_entity(
@@ -67,8 +102,14 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                                 state,
                             );
                         }
-                        if get_item_use_on_pickup(&item) {
-                            use_item(&item, state);
+                        if use_and_remove_item_on_pickup(&item) {
+                            // let modifiers = use_item(&item, state);
+                            let effects: Vec<Effect> = get_item_effects(&item);
+                            get_all_modifiers_from_effects(&mut state.mods, effects);
+
+                            // state.apply_modifiers(&modifiers);
+                        } else {
+                            state.items.push(item.clone());
                         }
                     } else {
                         add_entity(
@@ -269,10 +310,7 @@ pub fn random_name(rng: &mut ThreadRng) -> String {
         }
     }
     if rng.gen_bool(0.5) {
-        if vowels
-            .iter()
-            .any(|n| *n == name[name.len() - 1])
-        {
+        if vowels.iter().any(|n| *n == name[name.len() - 1]) {
             name.push(consonants[rng.gen_range(0..consonants.len())]);
         } else {
             name.push(vowels[rng.gen_range(0..vowels.len())]);
