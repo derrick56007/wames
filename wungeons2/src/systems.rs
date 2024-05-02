@@ -32,7 +32,7 @@ pub fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)
             sight,
             vec![
                 Component::Position(None),
-                Component::Render(None),
+                Component::RenderFg(None),
                 Component::ZIndex(None),
                 Component::Fog(None),
             ],
@@ -42,7 +42,7 @@ pub fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)
             dummy,
             vec![
                 Component::Position(None),
-                Component::Render(None),
+                // Component::RenderFg(None),
                 Component::ZIndex(None),
             ],
             false,

@@ -49,6 +49,7 @@ mod inputs;
 mod items;
 mod letters;
 mod render;
+mod riddles;
 mod rooms;
 mod sight;
 mod state;
@@ -67,7 +68,7 @@ async fn run() {
         WindowBuilder::new()
             .with_inner_size(LogicalSize::new(width as f64, height as f64))
             .with_title("glyphon hello world")
-            // .with_resizable(false)
+            .with_resizable(false)
             .build(&event_loop)
             .unwrap(),
     );
@@ -152,11 +153,7 @@ async fn run() {
                 &mut font_system,
                 scale_factor,
                 &mut g.game.state,
-                &[
-                    Component::Position(None),
-                    Component::Render(None),
-                    Component::ZIndex(None),
-                ],
+                &[Component::Position(None), Component::ZIndex(None)],
                 &mut buffers,
             );
             let scale = 1.0;
@@ -164,11 +161,16 @@ async fn run() {
             let text_areas =
                 buffers
                     .iter_mut()
-                    .map(|(buffer, position, color, shift, Z_height)| {
+                    .map(|(buffer, position, color, shift, Z_height, center)| {
                         // position.x += 1;
                         TextArea {
                             buffer,
-                            left: (position.x * TILE_WIDTH) as f32 * scale,
+                            left: (position.x * TILE_WIDTH) as f32 * scale
+                                - if !*center {
+                                    0.0
+                                } else {
+                                    TILE_WIDTH as f32 / 2.0 * scale
+                                },
                             top: (position.y * TILE_HEIGHT) as f32 * scale + *shift * scale,
                             scale: scale as f32,
                             bounds: {

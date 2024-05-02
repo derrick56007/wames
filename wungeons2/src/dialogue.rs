@@ -45,9 +45,9 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                     continue;
                 }
                 let render_c = match color {
-                    Some((Some(color), None)) => Component::Render(Some((c.to_string(), color))),
-                    Some((None, Some(color))) => Component::Render(Some((c.to_string(), color))),
-                    None => Component::Render(Some((c.to_string(), WHITE))),
+                    Some((Some(color), None)) => Component::RenderFg(Some((c.to_string(), color, false))),
+                    Some((None, Some(color))) => Component::RenderFg(Some((c.to_string(), color, false))),
+                    None => Component::RenderFg(Some((c.to_string(), WHITE, false))),
                     _ => todo!(),
                 };
                 add_entity(
@@ -86,7 +86,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                                 y: pos.y + y,
                             })),
                             Component::ZIndex(Some(*z as isize)),
-                            Component::Render(Some((c.to_string(), WHITE))),
+                            Component::RenderFg(Some((c.to_string(), WHITE, false))),
                             Component::DialogueChar,
                         ],
                     ),
@@ -106,7 +106,7 @@ pub fn dialogue(state: &mut State, components: &[Component]) {
                             y: pos.y + y,
                         })),
                         Component::ZIndex(Some(*z as isize)),
-                        Component::Render(Some(('/'.to_string(), WHITE))),
+                        Component::RenderFg(Some(('/'.to_string(), WHITE, false))),
                         Component::DialogueChar,
                     ],
                 ),

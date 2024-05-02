@@ -138,8 +138,8 @@ pub enum Component {
     Room,
     Door,
     Position(Option<Position>),
-    Render(Option<(String, (u8, u8, u8, u8))>),
-    BackgroundColor(Option<(u8, u8, u8, u8)>),
+    RenderFg(Option<(String, (u8, u8, u8, u8), bool)>),
+    RenderBg(Option<(String, (u8, u8, u8, u8))>),
     ZIndex(Option<isize>),
     Player,
     Drop(Option<Item>),
@@ -171,7 +171,7 @@ pub fn get_default_component(c: &Component) -> Component {
     match c {
         Component::Position(_) => Component::Position(None),
         Component::Wall => Component::Wall,
-        Component::Render(_) => Component::Render(None),
+        Component::RenderFg(_) => Component::RenderFg(None),
         Component::ZIndex(_) => Component::ZIndex(None),
         Component::Room => Component::Room,
         Component::Door => Component::Door,
@@ -192,7 +192,7 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::SecretWallHint => Component::SecretWallHint,
         Component::AffectsFog => Component::AffectsFog,
         Component::Paywall(_) => Component::Paywall(None),
-        Component::BackgroundColor(_) => Component::BackgroundColor(None),
+        Component::RenderBg(_) => Component::RenderBg(None),
         Component::Mystery => Component::Mystery,
         Component::Hidden(_) => Component::Hidden(None),
     }

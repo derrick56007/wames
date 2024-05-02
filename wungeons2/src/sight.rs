@@ -63,7 +63,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
                     // let (render_c, _) =  get_component!(state.entities_map[f], Component::Render).unwrap();
                     state.set_component(
                         *f,
-                        Component::Render(Some(("█".to_string(), REVEALED_FOG_COLOR))),
+                        Component::RenderFg(Some(("█".to_string(), REVEALED_FOG_COLOR, false))),
                     );
                 }
                 _ => {
@@ -71,7 +71,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
                 }
             }
         } else {
-            state.set_component(*f, Component::Render(None));
+            state.set_component(*f, Component::RenderFg(None));
         }
     }
 
@@ -176,7 +176,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
 
                                 // },
                     }
-                    state.set_component(*f, Component::Render(None));
+                    state.set_component(*f, Component::RenderFg(None));
                 }
             }
         }

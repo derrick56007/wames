@@ -200,9 +200,17 @@ pub fn game_events(state: &mut State, _components: &[Component]) {
                         create_dialogue(
                             &mut state.entity_id_counter,
                             vec![
-                                ("Welcome to ".to_string(), None),
-                                ("WUNGEON".to_string(), Some((None, Some((255, 0, 0, 255))))),
-                                ("!\n\n(press any key to continue)".to_string(), None),
+                                ("\n  Welcome to\n\n\n".to_string(), None),
+                                (r"
+        ##\      ##\ ##\   ##\ ##\   ##\  ######\  ########\  ######\  ##\   ##\ 
+        ## | #\  ## |## |  ## |###\  ## |##  __##\ ##  _____|##  __##\ ###\  ## |
+        ## |###\ ## |## |  ## |####\ ## |## /  \__|## |      ## /  ## |####\ ## |
+        ## ## ##\## |## |  ## |## ##\## |## |####\ #####\    ## |  ## |## ##\## |
+        ####  _#### |## |  ## |## \#### |## |\_## |##  __|   ## |  ## |## \#### |
+        ###  / \### |## |  ## |## |\### |## |  ## |## |      ## |  ## |## |\### |
+        ##  /   \## |\######  |## | \## |\######  |########\  ######  |## | \## |
+        \__/     \__| \______/ \__|  \__| \______/ \________| \______/ \__|  \__|".to_string(), Some((None, Some((255, 0, 0, 255))))),
+                                ("\n\n\n\n                              (press any key to continue)".to_string(), None),
                             ],
                             vec![],
                             Position::ZERO,

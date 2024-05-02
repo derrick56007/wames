@@ -84,7 +84,7 @@ pub fn get_item_description(
     item: &Item,
 ) -> Vec<(String, Option<(Option<(u8, u8, u8, u8)>, Option<(u8, u8, u8, u8)>)>)> {
     match item {
-        Item::Key => vec![("(unlocks doors)".into(), None)],
+        Item::Key => vec![("(does something?)".into(), None)],
         Item::Glasses => vec![("(+1 hand)".into(), None)],
         Item::MembershipCard => vec![("(25% discount at merchants)".into(), None)],
         Item::VowelVortex => vec![("(+1 mult for each vowel in the word)".into(), None)],

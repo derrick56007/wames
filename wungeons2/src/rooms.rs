@@ -317,12 +317,13 @@ pub fn create_rooms(
             RoomType::Boss => {
                 let boss_position = rect.center(pos);
 
-                for (_, d) in DIRECTIONS {
-                    entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
-                }
-                for (_, d) in DIAGONAL_DIRECTIONS {
-                    entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
-                }
+                // TODO ?
+                // for (_, d) in DIRECTIONS {
+                //     entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
+                // }
+                // for (_, d) in DIAGONAL_DIRECTIONS {
+                //     entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
+                // }
 
                 // TODO create minion
 
