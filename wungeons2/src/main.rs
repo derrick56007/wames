@@ -22,7 +22,6 @@ use game_loop::game_loop;
 const TILE_WIDTH: isize = 18;
 const TILE_HEIGHT: isize = 30;
 
-
 use std::time::SystemTime;
 
 // use device_query::{DeviceQuery, Keycode};
@@ -39,6 +38,7 @@ use crate::{
     systems::get_systems,
 };
 
+mod colors;
 mod components;
 mod create;
 mod dialogue;
@@ -47,20 +47,18 @@ mod entity;
 mod event;
 mod inputs;
 mod items;
+mod letters;
 mod render;
 mod rooms;
 mod sight;
 mod state;
 mod systems;
-mod colors;
 
 use crate::render::render;
-
 
 fn main() {
     pollster::block_on(run());
 }
-
 
 async fn run() {
     let event_loop = EventLoop::new().unwrap();
@@ -161,34 +159,38 @@ async fn run() {
                 ],
                 &mut buffers,
             );
+            let scale = 1.0;
             buffers.sort_by(|b1, b2| b1.4.partial_cmp(&b2.4).unwrap());
-            let text_areas = buffers
-                .iter_mut()
-                .map(|(buffer, position, color, shift, Z_height)| {
-                    // position.x += 1;
-                    TextArea {
-                        buffer,
-                        left: (position.x * TILE_WIDTH) as f32,
-                        top: (position.y * TILE_HEIGHT) as f32 + *shift,
-                        scale: 1.0,
-                        bounds: {
-                            let mut bounds = TextBounds {
-                                left: ((position.x - 1) * TILE_WIDTH) as i32,
-                                top: ((position.y - 1) * TILE_HEIGHT) as i32,
-                                right: ((position.x + TILE_WIDTH + 1) * TILE_WIDTH) as i32,
-                                bottom: ((position.y + TILE_HEIGHT + 1) * TILE_HEIGHT) as i32,
-                            };
+            let text_areas =
+                buffers
+                    .iter_mut()
+                    .map(|(buffer, position, color, shift, Z_height)| {
+                        // position.x += 1;
+                        TextArea {
+                            buffer,
+                            left: (position.x * TILE_WIDTH) as f32 * scale,
+                            top: (position.y * TILE_HEIGHT) as f32 * scale + *shift * scale,
+                            scale: scale as f32,
+                            bounds: {
+                                let mut bounds = TextBounds {
+                                    left: (((position.x - 1) * TILE_WIDTH) as f32 * scale) as i32,
+                                    top: (((position.y - 1) * TILE_HEIGHT) as f32 * scale) as i32,
+                                    right: (((position.x + TILE_WIDTH + 1) * TILE_WIDTH) as f32
+                                        * scale) as i32,
+                                    bottom: (((position.y + TILE_HEIGHT + 1) * TILE_HEIGHT) as f32
+                                        * scale) as i32,
+                                };
 
-                            // if *shift_up {
-                            //     // bounds.top -= TILE_HEIGHT  / ;
-                            // }
+                                // if *shift_up {
+                                //     // bounds.top -= TILE_HEIGHT  / ;
+                                // }
 
-                            bounds
-                        },
+                                bounds
+                            },
 
-                        default_color: Color::rgba(color.0, color.1, color.2, color.3),
-                    }
-                });
+                            default_color: Color::rgba(color.0, color.1, color.2, color.3),
+                        }
+                    });
 
             text_renderer
                 .prepare(
@@ -415,7 +417,6 @@ impl Game {
     //     ));
     // }
 }
-
 
 // fn main() {
 //     env::set_var("RUST_BACKTRACE", "1");

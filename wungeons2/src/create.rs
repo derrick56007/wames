@@ -11,10 +11,10 @@ pub fn create_wall(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity
         vec![
             Component::Wall,
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█'.to_string(), (50, 50, 50, 255)))),
-            Component::BackgroundColor(Some((40, 40, 40, 255))),
+            Component::Render(Some(('█'.to_string(), WALL_COLOR))),
+            Component::BackgroundColor(Some(WALL_BG_COLOR)),
             Component::ZIndex(Some(7)),
-            Component::Invisible(Some(true)),
+            Component::Hidden(Some(true)),
             Component::Solid,
         ],
     )
@@ -31,9 +31,11 @@ pub fn create_secret_wall(
         vec![
             Component::SecretWall(Some(group)),
             Component::Position(Some(*wall_pos)),
-            Component::Render(Some(('█'.to_string(), BLACK))),
-            Component::ZIndex(Some(2)),
+            Component::Render(Some(('█'.to_string(), WALL_COLOR))),
+            Component::BackgroundColor(Some(WALL_BG_COLOR)),
+            Component::ZIndex(Some(7)),
             Component::Solid,
+            Component::Hidden(Some(true))//ᒉ
             // Component::Viewable(Some((ViewType::SecretWall(group), vec![])))
         ],
     )
@@ -68,7 +70,7 @@ pub fn create_fog(entity_id_counter: &mut usize, wall_pos: &Position) -> Entity 
             Component::BackgroundColor(Some(FOG_BG_COLOR)),
             Component::ZIndex(Some(10)),
             Component::Fog(Some(false)),
-            Component::Invisible(Some(true))//ᒉ
+            Component::Hidden(Some(true))//ᒉ
         ],
     )
 }
@@ -82,7 +84,7 @@ pub fn create_floor(entity_id_counter: &mut usize, wall_pos: &Position, color: (
             Component::Render(Some((' '.to_string(), (0, 0, 0, 0)))),
             Component::BackgroundColor(Some(color)),
             Component::ZIndex(Some(z)),
-            Component::Invisible(Some(true))//ᒉ
+            Component::Hidden(Some(true))//ᒉ
             // Component::Fog(Some(FogState::Dark))
         ],
     )
@@ -96,7 +98,7 @@ pub fn create_pedastal(entity_id_counter: &mut usize, wall_pos: &Position, color
             Component::Position(Some(*wall_pos)),
             Component::Render(Some(('▄'.to_string(), color))),
             Component::ZIndex(Some(1)),
-            Component::Invisible(Some(true)),
+            Component::Hidden(Some(true)),
             Component::BackgroundColor(Some(darken_color(color)))
             // Component::Fog(Some(FogState::Dark))
         ],
@@ -112,7 +114,7 @@ pub fn create_plant(entity_id_counter: &mut usize, wall_pos: &Position) -> Entit
             Component::Render(Some(('ᒉ'.to_string(), (0, 255, 0, 255)))),
             // Component::BackgroundColor(Some((0,0,255,100))),
             Component::ZIndex(Some(2)),
-            Component::Invisible(Some(true))//
+            Component::Hidden(Some(true))//
             // Component::Fog(Some(FogState::Dark))
         ],
     )
@@ -142,7 +144,7 @@ pub fn create_door(entity_id_counter: &mut usize, pos: &Position) -> Entity {
             Component::Position(Some(*pos)),
             Component::Render(Some(('$'.to_string(), WHITE))),
             Component::ZIndex(Some(0)),
-            Component::Invisible(Some(true))//ᒉ
+            Component::Hidden(Some(true))//ᒉ
         ],
     )
 }
@@ -150,19 +152,19 @@ pub fn create_door(entity_id_counter: &mut usize, pos: &Position) -> Entity {
 pub fn create_minion(
     entity_id_counter: &mut usize,
     pos: &Position,
-    c: char,
+    // c: char,
     looks: String,
     is_boss: bool,
     spawn_key: bool,
 ) -> Entity {
     let mut comps = vec![
-        Component::Minion(Some((is_boss, c))),
+        Component::Minion(Some(is_boss)),
         Component::Position(Some(*pos)),
         Component::Render(Some((looks, WHITE))),
         Component::ZIndex(Some(0)),
         Component::Viewable(Some((ViewType::Minion, vec![]))),
         Component::ViewDistance(Some(PLAYER_VIEW_DISTANCE - 2)),
-        Component::Invisible(Some(true))//ᒉ
+        Component::Hidden(Some(true))//ᒉ
     ];
 
     if spawn_key {
@@ -212,7 +214,7 @@ pub fn create_item(
         Component::ZIndex(Some(4)),
         Component::Item(Some(item)),
         Component::Paywall(Some(cost)),
-        Component::Invisible(Some(true))//ᒉ
+        Component::Hidden(Some(true))//ᒉ
     ];
     // if cost > 0 {
     //     comps.push(Component::Paywall(Some(cost)));

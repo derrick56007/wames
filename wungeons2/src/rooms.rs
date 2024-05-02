@@ -123,7 +123,7 @@ pub fn create_rooms(
     let mut big_lines: Vec<(Position, Position)> = vec![];
 
     let grid_size: &Rect = &state.grid_size.clone();
-    let mut minion_letters = state.get_unchosen_letters_if_possible(num_big_rooms);
+    // let mut minion_letters = state.get_unchosen_letters_if_possible(num_big_rooms);
     let rng: &mut ThreadRng = &mut state.rng;
 
     let entity_id_counter: &mut usize = &mut state.entity_id_counter;
@@ -268,7 +268,7 @@ pub fn create_rooms(
                 wall_positions.remove(&line_pos);
                 entities.push(create_floor(entity_id_counter, &line_pos, BG_COLOR, -1));
                 if state.fog_enabled {
-                    entities.push(create_fog(entity_id_counter, &line_pos));
+                    // entities.push(create_fog(entity_id_counter, &line_pos));
                 }
             }
         }
@@ -287,7 +287,7 @@ pub fn create_rooms(
                     -1
                 ));
                 if state.fog_enabled {
-                    entities.push(create_fog(entity_id_counter, &Position { x, y }));
+                    // entities.push(create_fog(entity_id_counter, &Position { x, y }));
                 }
 
                 if rng.gen_bool(0.5) {
@@ -324,20 +324,24 @@ pub fn create_rooms(
                     entities.push(create_door(entity_id_counter, &(&boss_position + &d)));
                 }
 
+                // TODO create minion
+
                 entities.push(create_minion(
                     entity_id_counter,
                     &boss_position,
-                    minion_letters.pop().unwrap(),
+                    // ,
                     'Ӧ'.to_string(),
                     true,
                     false,
                 ));
             }
             RoomType::Big => {
+                // TODO create boss
+
                 entities.push(create_minion(
                     entity_id_counter,
                     &rect.center(pos),
-                    minion_letters.pop().unwrap(),
+                    // minion_letters.pop().unwrap(),
                     'ଳ'.to_string(),
                     false,
                     if !spawned_key {

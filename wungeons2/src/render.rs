@@ -83,9 +83,9 @@ pub fn render(
         let entity = &e;
 
         if state.fog_enabled
-            && state.entities_map[entity].contains_component(&Component::Invisible(None))
+            && state.entities_map[entity].contains_component(&Component::Hidden(None))
         {
-            if get_component!(state.entities_map[entity], Component::Invisible).unwrap() {
+            if get_component!(state.entities_map[entity], Component::Hidden).unwrap() {
                 continue;
             }
         }
@@ -119,7 +119,9 @@ pub fn render(
             let offset = if state.entities_map[entity].contains_component(&Component::DialogueChar)
             {
                 0.0
-            } else if state.entities_map[entity].contains_component(&Component::Wall) {
+            } else if state.entities_map[entity].contains_component(&Component::Wall)
+                || state.entities_map[entity].contains_component(&Component::SecretWall(None))
+            {
                 -TILE_HEIGHT as f32 / 2.0
             } else if state.entities_map[entity].contains_component(&Component::Player) {
                 -TILE_HEIGHT as f32 / 4.0

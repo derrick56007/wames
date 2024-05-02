@@ -32,7 +32,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
     let viewers = state.get_entities(&[Component::ViewDistance(None)]).clone();
     let viewables = state.get_entities(&[Component::Viewable(None)]).clone();
     let invisible_entities = state
-        .get_entities(&[Component::Invisible(None), Component::Position(None)])
+        .get_entities(&[Component::Hidden(None), Component::Position(None)])
         .clone();
     let mut invisible_positions: HashMap<Position, Vec<usize>> = HashMap::new();
 
@@ -108,7 +108,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
 
                             state.set_component(
                                 *e,
-                                Component::Invisible(Some(false)),
+                                Component::Hidden(Some(false)),
                             )
                         }
                     }

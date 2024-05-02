@@ -132,7 +132,7 @@ pub fn contains_point(pos1: &Position, rect1: &Rect, pos2: &Position) -> bool {
 
 #[derive(Eq, PartialEq, Hash, Clone, Debug)]
 pub enum Component {
-    Minion(Option<(bool, char)>),
+    Minion(Option<bool>),
     Wall,
     SecretWall(Option<usize>),
     Room,
@@ -157,7 +157,7 @@ pub enum Component {
     SecretWallHint,
     Paywall(Option<usize>),
     Mystery,
-    Invisible(Option<bool>)
+    Hidden(Option<bool>)
 }
 
 // #[derive(Eq, Partia: components::ComponentlEq, Hash, Clone, Debug)]
@@ -194,6 +194,6 @@ pub fn get_default_component(c: &Component) -> Component {
         Component::Paywall(_) => Component::Paywall(None),
         Component::BackgroundColor(_) => Component::BackgroundColor(None),
         Component::Mystery => Component::Mystery,
-        Component::Invisible(_) => Component::Invisible(None),
+        Component::Hidden(_) => Component::Hidden(None),
     }
 }

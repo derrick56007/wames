@@ -319,9 +319,9 @@ pub fn handle_inputs(
                         // let render: char =
                         //     get_component!(&state.entities_map[&hit], Component::Render)
                         //         .unwrap();
-                        let (is_boss, letter) =
+                        let is_boss =
                             get_component!(&state.entities_map[&hit], Component::Minion).unwrap();
-                        state.add_letter(letter);
+                        // state.add_letter(letter);
 
                         let tries = 6;
                         let words_vec: Vec<String> = wurdle_words::WURDLE_WURDS
@@ -333,9 +333,9 @@ pub fn handle_inputs(
 
                         let (won, attempts, _word) = play(
                             tries,
-                            HashSet::from_iter(state.available_letters.clone()),
+                            HashSet::new(),
                             words_vec,
-                            Some(letter),
+                            None,
                             false,
                         );
                         if won {
@@ -474,7 +474,9 @@ pub fn handle_inputs(
                                     create_revealed_floor(&mut state.entity_id_counter, &pos),
                                     state,
                                 );
-                                add_entity(create_fog(&mut state.entity_id_counter, &pos), state);
+
+                                // TODO use?
+                                // add_entity(create_fog(&mut state.entity_id_counter, &pos), state);
                             }
                         }
                     }

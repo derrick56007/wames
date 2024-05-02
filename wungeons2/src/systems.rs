@@ -49,7 +49,7 @@ pub fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)
         ),
         (
             dummy,
-            vec![Component::Invisible(None), Component::Position(None)],
+            vec![Component::Hidden(None), Component::Position(None)],
             false,
         ),
     ]
