@@ -22,6 +22,46 @@ use game_loop::game_loop;
 const TILE_WIDTH: isize = 18;
 const TILE_HEIGHT: isize = 30;
 
+
+use std::time::SystemTime;
+
+// use device_query::{DeviceQuery, Keycode};
+
+// use event::Event;
+
+// use rooms::{create_floor, create_item};
+// use wurdle::{play, wurdle_words};
+
+use crate::{
+    components::{Component, Rect},
+    inputs::handle_inputs,
+    state::State,
+    systems::get_systems,
+};
+
+mod components;
+mod create;
+mod dialogue;
+mod effects;
+mod entity;
+mod event;
+mod inputs;
+mod items;
+mod render;
+mod rooms;
+mod sight;
+mod state;
+mod systems;
+mod colors;
+
+use crate::render::render;
+
+
+fn main() {
+    pollster::block_on(run());
+}
+
+
 async fn run() {
     let event_loop = EventLoop::new().unwrap();
     let (width, height) = (800, 600);
@@ -121,18 +161,15 @@ async fn run() {
                 ],
                 &mut buffers,
             );
+            buffers.sort_by(|b1, b2| b1.4.partial_cmp(&b2.4).unwrap());
             let text_areas = buffers
                 .iter_mut()
-                .map(|(buffer, position, color, shift_up)| {
+                .map(|(buffer, position, color, shift, Z_height)| {
                     // position.x += 1;
-                    let mut shift = 0.0;
-                    if *shift_up {
-                        shift = -TILE_HEIGHT as f32 / 2.0;
-                    }
                     TextArea {
                         buffer,
                         left: (position.x * TILE_WIDTH) as f32,
-                        top: (position.y * TILE_HEIGHT) as f32 + shift,
+                        top: (position.y * TILE_HEIGHT) as f32 + *shift,
                         scale: 1.0,
                         bounds: {
                             let mut bounds = TextBounds {
@@ -142,9 +179,9 @@ async fn run() {
                                 bottom: ((position.y + TILE_HEIGHT + 1) * TILE_HEIGHT) as i32,
                             };
 
-                            if *shift_up {
-                                // bounds.top -= TILE_HEIGHT  / ;
-                            }
+                            // if *shift_up {
+                            //     // bounds.top -= TILE_HEIGHT  / ;
+                            // }
 
                             bounds
                         },
@@ -379,41 +416,6 @@ impl Game {
     // }
 }
 
-fn main() {
-    pollster::block_on(run());
-}
-
-use std::time::SystemTime;
-
-// use device_query::{DeviceQuery, Keycode};
-
-// use event::Event;
-
-// use rooms::{create_floor, create_item};
-// use wurdle::{play, wurdle_words};
-
-use crate::{
-    components::{Component, Rect},
-    inputs::handle_inputs,
-    state::State,
-    systems::get_systems,
-};
-
-mod components;
-mod create;
-mod dialogue;
-mod effects;
-mod entity;
-mod event;
-mod inputs;
-mod items;
-mod render;
-mod rooms;
-mod sight;
-mod state;
-mod systems;
-
-use crate::render::render;
 
 // fn main() {
 //     env::set_var("RUST_BACKTRACE", "1");

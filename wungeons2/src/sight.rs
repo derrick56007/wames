@@ -10,10 +10,14 @@ use render::bresenham;
 
 use crate::{
     components::{self, Component},
-    create::BLACK,
-    entity::{self},
+    entity,
     event, get_component, render,
     state::State,
+};
+
+
+use crate::{
+    colors::*
 };
 
 #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -27,20 +31,22 @@ pub fn sight(state: &mut State, components: &[Component]) {
     let fog_entities = state.get_entities(components).clone();
     let viewers = state.get_entities(&[Component::ViewDistance(None)]).clone();
     let viewables = state.get_entities(&[Component::Viewable(None)]).clone();
-    let invisible_positions = state
+    let invisible_entities = state
         .get_entities(&[Component::Invisible(None), Component::Position(None)])
         .clone();
-    let invisible_positions: HashMap<Position, usize> = HashMap::from_iter(
-        invisible_positions
-            .iter()
-            .map(|e| {
-                (
-                    get_component!(state.entities_map[e], Component::Position).unwrap(),
-                    *e,
-                )
-            })
-            .collect::<Vec<(Position, usize)>>(),
-    );
+    let mut invisible_positions: HashMap<Position, Vec<usize>> = HashMap::new();
+
+
+    for e in invisible_entities{
+        let p =  get_component!(state.entities_map[&e], Component::Position).unwrap();
+
+        if !invisible_positions.contains_key(&p) {
+            invisible_positions.insert(p, vec![]);
+        }
+        invisible_positions.get_mut(&p).unwrap().push(e);
+
+    }
+    
     let solid_positions = state
         .get_entities(&[Component::Position(None), Component::Solid])
         .clone();
@@ -54,13 +60,14 @@ pub fn sight(state: &mut State, components: &[Component]) {
         if state.fog_enabled {
             match visited {
                 true => {
+                    // let (render_c, _) =  get_component!(state.entities_map[f], Component::Render).unwrap();
                     state.set_component(
                         *f,
-                        Component::Render(Some(("█".to_string(), (55, 55, 55, 255)))),
+                        Component::Render(Some(("█".to_string(), REVEALED_FOG_COLOR))),
                     );
                 }
                 _ => {
-                    state.set_component(*f, Component::Render(Some(("█".to_string(), BLACK))));
+                    // state.set_component(*f, Component::Render(Some(("█".to_string(), BLACK))));
                 }
             }
         } else {
@@ -80,9 +87,15 @@ pub fn sight(state: &mut State, components: &[Component]) {
 
         let viewer_pos = get_component!(state.entities_map[&viewer], Component::Position).unwrap();
         let mut seen_positions = HashSet::new();
-        for y in 0..state.grid_size.height {
-            for x in 0..state.grid_size.width {
-                let pos = Position { x, y };
+        let a= -(view_distance as isize);
+        let b = view_distance as isize;
+        for y in a..b {
+            for x in a..b {
+                if x > a && x < b - 1 && y > a && y < b - 1 {
+                    continue;
+                }
+                let pos = viewer_pos + &Position { x, y };
+
                 'inner: for p in bresenham(&viewer_pos, &pos)
                     .iter()
                     .copied()
@@ -91,10 +104,13 @@ pub fn sight(state: &mut State, components: &[Component]) {
                     if invisible_positions.contains_key(&p)
                         && state.entities_map[&viewer].contains_component(&Component::AffectsFog)
                     {
-                        state.set_component(
-                            invisible_positions[&p],
-                            Component::Invisible(Some(false)),
-                        )
+                        for e in &invisible_positions[&p] {
+
+                            state.set_component(
+                                *e,
+                                Component::Invisible(Some(false)),
+                            )
+                        }
                     }
                     if solid_positions.contains(&p) {
                         break 'inner;

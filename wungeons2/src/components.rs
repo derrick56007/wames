@@ -160,7 +160,7 @@ pub enum Component {
     Invisible(Option<bool>)
 }
 
-// #[derive(Eq, PartialEq, Hash, Clone, Debug)]
+// #[derive(Eq, Partia: components::ComponentlEq, Hash, Clone, Debug)]
 // pub enum FogState {
 //     Dark(bool),
 //     Lit,

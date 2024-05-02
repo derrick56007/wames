@@ -1,10 +1,13 @@
 use crate::{
     components::{Component, Position},
-    create::WHITE,
     entity::{add_entity, new_entity},
     event::Event,
     get_component,
     state::State,
+};
+
+use crate::{
+    colors::*
 };
 
 pub fn dialogue(state: &mut State, components: &[Component]) {

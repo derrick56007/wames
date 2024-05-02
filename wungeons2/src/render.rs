@@ -1,11 +1,12 @@
 use crate::{
     components::{Component, Position},
-    create::WHITE,
     get_component,
     items::get_item_char,
     state::State,
     TILE_HEIGHT, TILE_WIDTH,
 };
+
+use crate::colors::*;
 
 const COLORS: [(&str, &str); 17] = [
     ("foreground black", "\x1b[30m"),
@@ -57,7 +58,7 @@ pub fn render(
     scale_factor: f64,
     state: &mut State,
     components: &[Component],
-    buffers: &mut Vec<(Buffer, Position, (u8, u8, u8, u8), bool)>,
+    buffers: &mut Vec<(Buffer, Position, (u8, u8, u8, u8), f32, f32)>,
 ) {
     let entities = state.get_entities(components);
     let mut entities = entities
@@ -74,17 +75,22 @@ pub fn render(
             )
         })
         .collect::<Vec<(usize, (isize, isize))>>();
-    entities.sort_by(|a, b| a.1.cmp(&b.1));
+    // entities.sort_by(|a, b| a.1.cmp(&b.1));
+
+    // let mut renderables = vec![];
 
     for (e, _) in entities.iter() {
         let entity = &e;
 
-        if state.fog_enabled &&  state.entities_map[entity].contains_component(&Component::Invisible(None)) {
+        if state.fog_enabled
+            && state.entities_map[entity].contains_component(&Component::Invisible(None))
+        {
             if get_component!(state.entities_map[entity], Component::Invisible).unwrap() {
                 continue;
             }
         }
         let position = get_component!(state.entities_map[entity], Component::Position).unwrap();
+        let z = get_component!(state.entities_map[entity], Component::ZIndex).unwrap() as f32;
 
         if let Some((render_char, fg_color)) =
             get_component!(state.entities_map[entity], Component::Render)
@@ -94,36 +100,69 @@ pub fn render(
                     get_component!(state.entities_map[entity], Component::BackgroundColor)
                 {
                     buffers.push((
-                        create_buffer('█'.to_string(), font_system),
+                        create_buffer(
+                            if render_char.trim().is_empty() {
+                                '█'.to_string()
+                            } else {
+                                render_char.to_string()
+                            },
+                            font_system,
+                        ),
                         position,
                         bg_color,
-                        false,
+                        0.0,
+                        (position.y + TILE_HEIGHT) as f32 + z,
                     ));
                 }
             }
-        }
-    }
 
-    for (e, _) in entities.iter() {
-        let entity = &e;
-
-        if state.fog_enabled && state.entities_map[entity].contains_component(&Component::Invisible(None)) {
-            if get_component!(state.entities_map[entity], Component::Invisible).unwrap() {
-                continue;
-            }
-        }
-        let position = get_component!(state.entities_map[entity], Component::Position).unwrap();
-        if let Some((render_char, fg_color)) =
-            get_component!(state.entities_map[entity], Component::Render)
-        {
+            let offset = if state.entities_map[entity].contains_component(&Component::DialogueChar)
+            {
+                0.0
+            } else if state.entities_map[entity].contains_component(&Component::Wall) {
+                -TILE_HEIGHT as f32 / 2.0
+            } else if state.entities_map[entity].contains_component(&Component::Player) {
+                -TILE_HEIGHT as f32 / 4.0
+            } else {
+                -TILE_HEIGHT as f32 / 3.0
+            };
             buffers.push((
                 create_buffer(render_char.to_string(), font_system),
                 position,
                 fg_color,
-                !state.entities_map[entity].contains_component(&Component::DialogueChar),
+                offset,
+                (position.y + TILE_HEIGHT) as f32 - offset + z,
             ));
         }
     }
+
+    // for (e, _) in entities.iter() {
+    //     let entity = &e;
+
+    //     if state.fog_enabled
+    //         && state.entities_map[entity].contains_component(&Component::Invisible(None))
+    //     {
+    //         if get_component!(state.entities_map[entity], Component::Invisible).unwrap() {
+    //             continue;
+    //         }
+    //     }
+    //     let position = get_component!(state.entities_map[entity], Component::Position).unwrap();
+    //     if let Some((render_char, fg_color)) =
+    //         get_component!(state.entities_map[entity], Component::Render)
+    //     {
+    //         buffers.push((
+    //             create_buffer(render_char.to_string(), font_system),
+    //             position,
+    //             fg_color,
+    //             if state.entities_map[entity].contains_component(&Component::DialogueChar) {
+    //                 0.0
+    //             } else {
+    //                 -TILE_HEIGHT as f32 / 2.0
+    //             },
+    //             position.y as f32,
+    //         ));
+    //     }
+    // }
 
     for (x, c) in state.dialogue_input.chars().enumerate() {
         buffers.push((
@@ -133,7 +172,8 @@ pub fn render(
                 y: state.grid_size.height,
             },
             WHITE,
-            false,
+            0.0,
+            state.grid_size.height as f32,
         ));
     }
 
@@ -167,7 +207,8 @@ pub fn render(
                     y: i as isize,
                 },
                 WHITE,
-                false,
+                0.0,
+                i as f32,
             ));
         }
     }

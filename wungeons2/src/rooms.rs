@@ -10,13 +10,17 @@ use crate::{
         intersects, line_rect, Component, Position, Rect, DIAGONAL_DIRECTIONS, DIRECTIONS,
     },
     create::{
-        create_door, create_floor, create_fog, create_item, create_minion, create_mystery,
-        create_secret_wall, create_secret_wall_hint, create_wall, GOLD,
+        create_door, create_floor, create_fog, create_item, create_minion, create_mystery, create_pedastal, create_plant, create_secret_wall, create_secret_wall_hint, create_wall
     },
     entity::{new_entity, Entity},
     items::Item,
     render::bresenham,
     state::State,
+};
+
+
+use crate::{
+    colors::*
 };
 
 const BIG_ROOM_WIDTH_RANGE: Range<usize> = 11..12;
@@ -262,8 +266,10 @@ pub fn create_rooms(
         ) {
             for line_pos in bresenham(pos1, pos2) {
                 wall_positions.remove(&line_pos);
-                entities.push(create_floor(entity_id_counter, &line_pos));
-                entities.push(create_fog(entity_id_counter, &line_pos));
+                entities.push(create_floor(entity_id_counter, &line_pos, BG_COLOR, -1));
+                if state.fog_enabled {
+                    entities.push(create_fog(entity_id_counter, &line_pos));
+                }
             }
         }
         secret_hallways.push((*pos1, *pos2));
@@ -274,8 +280,20 @@ pub fn create_rooms(
         for x in pos.x + 1..pos.x + rect.width {
             for y in pos.y + 1..pos.y + rect.height {
                 wall_positions.remove(&Position { x, y });
-                entities.push(create_floor(entity_id_counter, &Position { x, y }));
-                entities.push(create_fog(entity_id_counter, &Position { x, y }));
+                entities.push(create_floor(
+                    entity_id_counter,
+                    &Position { x, y },
+                    BG_COLOR,
+                    -1
+                ));
+                if state.fog_enabled {
+                    entities.push(create_fog(entity_id_counter, &Position { x, y }));
+                }
+
+                if rng.gen_bool(0.5) {
+                    // TODO
+                    // entities.push(create_plant(entity_id_counter, &Position { x, y }));
+                }
             }
         }
     }
@@ -331,27 +349,32 @@ pub fn create_rooms(
                 ));
             }
             RoomType::Secret => {
-                for (_, d) in DIAGONAL_DIRECTIONS {
-                    entities.push(new_entity(
-                        entity_id_counter,
-                        vec![
-                            Component::Position(Some(rect.center(pos) + &d)),
-                            Component::Render(Some(("█".to_string(), GOLD))),
-                            Component::ZIndex(Some(4)),
-                        ],
-                    ));
-                }
+                // for (_, d) in DIAGONAL_DIRECTIONS {
+                //     entities.push(create_floor(
+                //         entity_id_counter,
+                //         &(rect.center(pos) + &d),
+                //         SILVER,
+                //         1
+                //     ));
+                // }
 
-                for (_, d) in DIRECTIONS {
-                    entities.push(new_entity(
-                        entity_id_counter,
-                        vec![
-                            Component::Position(Some(rect.center(pos) + &d)),
-                            Component::Render(Some(("█".to_string(), GOLD))),
-                            Component::ZIndex(Some(4)),
-                        ],
-                    ));
-                }
+                // for (_, d) in DIRECTIONS {
+                //     entities.push(create_floor(
+                //         entity_id_counter,
+                //         &(rect.center(pos) + &d),
+                //         SILVER,
+                //         1
+                //     ));
+                // }
+                // let mut pedestal = create_floor(
+                //     entity_id_counter,
+                //     &(rect.center(pos)),
+                //     SILVER,
+                //     1
+                // );
+                // pedestal.components.push(Component::BackgroundColor(Some(darken_color(SILVER))));
+
+                entities.push(create_pedastal(entity_id_counter, &(rect.center(pos)), SILVER));
                 // TODO
                 // entities.push(new_entity(
                 //     entity_id_counter,
@@ -385,6 +408,8 @@ pub fn create_rooms(
                     None,
                     None,
                 ));
+                entities.push(create_pedastal(entity_id_counter, &(rect.center(pos)), SILVER));
+
                 entities.push(create_item(
                     &mut state.rng,
                     entity_id_counter,
@@ -392,6 +417,8 @@ pub fn create_rooms(
                     None,
                     None,
                 ));
+                entities.push(create_pedastal(entity_id_counter, &left, SILVER));
+
                 entities.push(create_item(
                     &mut state.rng,
                     entity_id_counter,
@@ -399,6 +426,8 @@ pub fn create_rooms(
                     None,
                     None,
                 ));
+                entities.push(create_pedastal(entity_id_counter, &right, SILVER));
+
             }
             RoomType::Mystery => entities.push(create_mystery(
                 &mut state.rng,
@@ -406,11 +435,11 @@ pub fn create_rooms(
                 &rect.center(pos),
             )),
             RoomType::Item => {
-                let mut left = rect.center(pos);
-                left.x -= 2;
+                // let mut left = rect.center(pos);
+                // left.x -= 2;
 
-                let mut right = rect.center(pos);
-                right.x += 2;
+                // let mut right = rect.center(pos);
+                // right.x += 2;
 
                 entities.push(create_item(
                     &mut state.rng,
@@ -419,6 +448,8 @@ pub fn create_rooms(
                     None,
                     Some(0),
                 ));
+                entities.push(create_pedastal(entity_id_counter, &(rect.center(pos)), SILVER));
+
                 // entities.push(create_item(&mut state.rng, entity_id_counter, &left, Item::Glasses, 0));
                 // entities.push(create_item(&mut state.rng, entity_id_counter, &right, Item::Glasses, 0));
             }
