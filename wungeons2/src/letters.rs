@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use fnv::FnvHashMap;
+
 pub fn get_starting_tiles() -> Vec<char> {
     [
         " ".repeat(2),
@@ -39,8 +41,8 @@ pub fn get_starting_tiles() -> Vec<char> {
     ].join("").chars().collect()
 }
 
-pub fn get_starting_tile_points() -> HashMap<char, usize> {
-    HashMap::from_iter([
+pub fn get_starting_tile_points() -> FnvHashMap<char, usize> {
+    FnvHashMap::from_iter([
         (' ', 0),
 
         ('E', 1),

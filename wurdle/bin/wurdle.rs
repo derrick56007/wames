@@ -29,5 +29,7 @@ fn main() {
     // let mut k = hashm.iter().map(|(c, u)| (*c, *u)).collect::<Vec<(char, usize)>>();
     // k.sort_by(|a, b| a.1.cmp(&b.1));
     // println!("{:#?}", k);
-    play(tries, available_letters, words_vec, None, false);
+    play(tries, 
+        // available_letters, 
+        words_vec, None, false);
 }

@@ -39,7 +39,7 @@ fn get_word(daily: bool, words_vec: &[String]) -> (String, Vec<char>, HashSet<ch
 
 pub fn play(
     tries: usize,
-    available_letters: HashSet<char>,
+    // available_letters: Option<HashSet<char>>,
     all_words_vec: Vec<String>,
     minion: Option<char>,
     show_stats: bool,
@@ -58,13 +58,13 @@ pub fn play(
     let choice_words: Vec<String> = all_words_vec
         .clone()
         .iter()
-        .filter(|word| {
-            if !available_letters.is_empty() {
-                word.chars().all(|c| available_letters.contains(&c))
-            } else {
-                true
-            }
-        })
+        // .filter(|word| {
+        //     if let Some(available_letters) = available_letters) &&! available_letters.is_empty()  {
+        //         word.chars().all(|c| available_letters.contains(&c))
+        //     } else {
+        //         true
+        //     }
+        // })
         .map(|s| s.to_string())
         .filter(|s| {
             if let Some(minion) = minion {
@@ -184,7 +184,7 @@ pub fn play(
                         "yellow"
                     } else if used_letters.contains(&c)
                         || c == ' '
-                        || (!available_letters.is_empty() && !available_letters.contains(&c))
+                        // || (!available_letters.is_empty() && !available_letters.contains(&c))
                     {
                         "reset"
                     } else {

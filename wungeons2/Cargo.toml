@@ -13,4 +13,6 @@ pollster = "0.3.0"
 game-loop = { version = "*", features = ["winit"] } # or tao
 rand = "0.8.5"
 wurdle = { path = "../wurdle", version = "0.1.0" }
+fnv = "1.0.3"
+
 

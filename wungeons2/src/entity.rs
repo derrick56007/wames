@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
+use fnv::{FnvHashMap, FnvHashSet};
+
 use crate::{
     components::{get_default_component, Component},
     state::State,
@@ -11,7 +13,7 @@ pub fn new_entity(entity_id_counter: &mut usize, components: Vec<Component>) -> 
     Entity {
         id,
         components: components.clone(),
-        component_index: HashMap::from_iter(
+        component_index: FnvHashMap::from_iter(
             components
                 .iter()
                 .enumerate()
@@ -24,7 +26,7 @@ pub fn new_entity(entity_id_counter: &mut usize, components: Vec<Component>) -> 
 pub struct Entity {
     pub id: usize,
     pub components: Vec<Component>,
-    pub component_index: HashMap<Component, usize>,
+    pub component_index: FnvHashMap<Component, usize>,
 }
 
 #[macro_export]
@@ -73,7 +75,7 @@ impl Entity {
 pub fn add_entity(entity: Entity, state: &mut State) {
     let entity = Box::new(entity);
 
-    let entity_components: HashSet<Component> = HashSet::from_iter(
+    let entity_components: FnvHashSet<Component> = FnvHashSet::from_iter(
         entity
             .components
             .iter()
@@ -84,7 +86,7 @@ pub fn add_entity(entity: Entity, state: &mut State) {
     for c in &entity_components {
         let new: Vec<Component> = vec![c.clone()];
         if !state.component_map.contains_key(&new) {
-            state.component_map.insert(new.clone(), HashSet::new());
+            state.component_map.insert(new.clone(), FnvHashSet::default());
         }
         state.component_map.get_mut(&new).unwrap().insert(entity.id);
     }
@@ -93,10 +95,10 @@ pub fn add_entity(entity: Entity, state: &mut State) {
         if !state.component_map.contains_key(system_required_components) {
             state
                 .component_map
-                .insert(system_required_components.clone(), HashSet::new());
+                .insert(system_required_components.clone(), FnvHashSet::default());
         }
         // dbg!(&entity_components, &system_required_components);
-        if HashSet::from_iter(system_required_components.clone()).is_subset(&entity_components) {
+        if FnvHashSet::from_iter(system_required_components.clone()).is_subset(&entity_components) {
             state
                 .component_map
                 .get_mut(system_required_components)

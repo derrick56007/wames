@@ -5,6 +5,7 @@ use components::Position;
 
 use event::Event;
 
+use fnv::{FnvHashMap, FnvHashSet};
 use render::bresenham;
 // use rooms::{create_floor, create_item};
 
@@ -34,7 +35,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
     let invisible_entities = state
         .get_entities(&[Component::Hidden(None), Component::Position(None)])
         .clone();
-    let mut invisible_positions: HashMap<Position, Vec<usize>> = HashMap::new();
+    let mut invisible_positions: FnvHashMap<Position, Vec<usize>> = FnvHashMap::default();
 
 
     for e in invisible_entities{
@@ -86,7 +87,7 @@ pub fn sight(state: &mut State, components: &[Component]) {
             get_component!(state.entities_map[&viewer], Component::ViewDistance).unwrap();
 
         let viewer_pos = get_component!(state.entities_map[&viewer], Component::Position).unwrap();
-        let mut seen_positions = HashSet::new();
+        let mut seen_positions = FnvHashSet::default();
         let a= -(view_distance as isize);
         let b = view_distance as isize;
         for y in a..b {

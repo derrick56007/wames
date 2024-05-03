@@ -3,6 +3,7 @@ use std::{
     ops::Range,
 };
 
+use fnv::{FnvHashMap, FnvHashSet};
 use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
@@ -236,10 +237,10 @@ pub fn create_rooms(
         ));
         // }
     }
-    let mut wall_positions: HashSet<Position> = HashSet::new();
-    let mut secret_hallway_positions: HashSet<Position> = HashSet::new();
+    let mut wall_positions: FnvHashSet<Position> = FnvHashSet::default();
+    let mut secret_hallway_positions: FnvHashSet<Position> = FnvHashSet::default();
 
-    let mut fog_positions: HashSet<Position> = HashSet::new();
+    let mut fog_positions: FnvHashSet<Position> = FnvHashSet::default();
 
     for x in 0..grid_size.width {
         for y in 0..grid_size.height {
@@ -461,7 +462,7 @@ pub fn create_rooms(
         }
     }
 
-    // let mut secret_wall_positions = HashSet::<Position>::new();
+    // let mut secret_wall_positions = FnvHashSet::<Position>::new();
     // if let Some((rect, pos, _)) = final_rooms.iter().nth(1) {
     //     for x in pos.x..pos.x + rect.width {
     //         secret_wall_positions.insert(Position { x, y: pos.y });
@@ -486,7 +487,7 @@ pub fn create_rooms(
         // entities.push(create_fog(entity_id_counter, &fog_pos));
     }
 
-    let all_positions: HashSet<Position> = HashSet::from_iter(
+    let all_positions: FnvHashSet<Position> = FnvHashSet::from_iter(
         wall_positions
             // .union(&secret_wall_positions)
             .iter()
@@ -494,7 +495,7 @@ pub fn create_rooms(
             // .map(|p| p.clone())
             .collect::<Vec<Position>>(),
     );
-    let mut empty_positions = HashSet::<Position>::new();
+    let mut empty_positions = FnvHashSet::<Position>::default();
     for x in 0..grid_size.width {
         for y in 0..grid_size.height {
             let pos = Position { x, y };
@@ -521,7 +522,7 @@ pub fn create_rooms(
         entities.push(create_wall(entity_id_counter, wall_pos));
     }
 
-    let mut secret_wall_group: HashMap<Position, usize> = HashMap::new();
+    let mut secret_wall_group: FnvHashMap<Position, usize> = FnvHashMap::default();
     for secrete_wall_pos in secret_hallway_positions.iter() {
         if secret_wall_group.is_empty() {
             secret_wall_group.insert(*secrete_wall_pos, 0);
@@ -562,7 +563,7 @@ pub fn create_rooms(
         //         if  secrete_wall_pos == secrete_wall_pos2{
         //             continue;
         //         }
-        //         // let mut group = HashSet::<usize>::from_iter(secret_wall_group.values().cloned().collect::<Vec<usize>>()).len();
+        //         // let mut group = FnvHashSet::<usize>::from_iter(secret_wall_group.values().cloned().collect::<Vec<usize>>()).len();
 
         //         for (_, d) in DIRECTIONS {
         //             if &(secrete_wall_pos + &d)  == secrete_wall_pos2{
@@ -579,7 +580,7 @@ pub fn create_rooms(
         //     // }
         // }
         group = Some(
-            HashSet::<usize>::from_iter(
+            FnvHashSet::<usize>::from_iter(
                 secret_wall_group.values().cloned().collect::<Vec<usize>>(),
             )
             .len(),

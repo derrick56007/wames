@@ -5,69 +5,64 @@ use std::{
     time::Duration,
 };
 
+use fnv::{FnvHashMap, FnvHashSet};
 use winit::keyboard::{KeyCode, SmolStr};
 // use device_query::{DeviceQuery, KeyCode};
 use wurdle::{play, wurdle_words};
 
 use crate::{
-    components::{Component, Position, DIRECTIONS},
-    create::{
+    components::{Component, Position, DIRECTIONS}, create::{
         create_dialogue, create_fog, create_item, create_revealed_floor, PLAYER_WALK_COOLDOWN,
-    },
-    entity::add_entity,
-    event::{random_name, Event},
-    get_component,
-    items::{get_item_description, Item},
-    state::State,
+    }, entity::add_entity, event::{random_name, Event}, get_component, items::{get_item_description, Item}, render::Show, state::State
 };
 
 pub fn handle_inputs(
     state: &mut State,
     components: &[Component],
-    key: Option<KeyCode>,
+    key: KeyCode,
     repeat: bool,
     text: Option<SmolStr>
 ) {
     let entities = state
         .component_map
         .get(components)
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
     let player_entities = state
         .component_map
         .get(&vec![Component::Player])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
     let minion_entities = state
         .component_map
         .get(&vec![Component::Minion(None)])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
 
     let mystery_entities = state
         .component_map
         .get(&vec![Component::Mystery])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
     let item_entities = state
         .component_map
         .get(&vec![Component::Item(None)])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
     let door_entities = state
         .component_map
         .get(&vec![Component::Door])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
     let wall_entities = state
         .component_map
         .get(&vec![Component::Wall])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
     let dialogue_entities = state
         .component_map
         .get(&vec![Component::Dialogue(None)])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
     let mut dialogue_entities = dialogue_entities
         .iter()
@@ -81,7 +76,7 @@ pub fn handle_inputs(
     let mut step_count_entities = state
         .component_map
         .get(&vec![Component::StepCount(None)])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
 
     dialogue_entities.sort_by(|a, b| a.1.cmp(&b.1));
@@ -89,17 +84,17 @@ pub fn handle_inputs(
     let secret_wall_entities = state
         .component_map
         .get(&vec![Component::SecretWall(None)])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone();
 
     // dbg!(&state.component_map);
 
     // let entity_ids: Vec<usize> = state.entities_map.keys().cloned().collect();
-    let directions: HashMap<KeyCode, Position> = HashMap::from_iter(DIRECTIONS);
+    let directions: FnvHashMap<KeyCode, Position> = FnvHashMap::from_iter(DIRECTIONS);
     let other_positions = state
         .component_map
         .get(&vec![Component::Position(None)])
-        .unwrap_or(&HashSet::new())
+        .unwrap_or(&FnvHashSet::default())
         .clone()
         .iter()
         .map(|e| {
@@ -113,7 +108,7 @@ pub fn handle_inputs(
     // 'outer: loop {
     // let keys: Vec<KeyCode> = state.device_state.get_keys();
     // let mut pressed_key: Option<KeyCode> = None;
-    // let key_map: HashMap<KeyCode, char> = HashMap::from_iter([
+    // let key_map: FnvHashMap<KeyCode, char> = FnvHashMap::from_iter([
     //     ()
     //     (KeyCode::KeyA, 'a'),
     //     (KeyCode::KeyB, 'b'),
@@ -147,14 +142,13 @@ pub fn handle_inputs(
     //     state.last_pressed_keys.clear();
     //     return;
     // }
-    let key = &key.unwrap();
     // if let Some(last_pressed_key) = &state.last_pressed_key {
-    //     if *last_pressed_key == HashSet::from_iter(keys.clone()) && !dialogue_entities.is_empty() {
+    //     if *last_pressed_key == FnvHashSet::from_iter(keys.clone()) && !dialogue_entities.is_empty() {
     //         // ignore if same key is pressed twice
     //         return;
     //     }
     // }
-    // state.last_pressed_key = Some(HashSet::from_iter(keys.clone()));
+    // state.last_pressed_key = Some(FnvHashSet::from_iter(keys.clone()));
     // if dialogue_entities.is_empty() {
     //     print!("\\e[?25l");
     //     stdout().flush().unwrap();
@@ -178,6 +172,7 @@ pub fn handle_inputs(
     // state.last_pressed_keys.insert(*key);
 
     // pressed_key = Some(*key);
+    
 
     if let Some((d, _)) = dialogue_entities.first() {
         let (_, options) = get_component!(state.entities_map[d], Component::Dialogue).unwrap();
@@ -287,8 +282,19 @@ pub fn handle_inputs(
             KeyCode::KeyF => {
                 state.fog_enabled = !state.fog_enabled;
             }
-            KeyCode::KeyD => {
-                state.show_deck = !state.show_deck;
+            KeyCode::KeyT => {
+                if state.show == Show::Tiles {
+                    state.show = Show::None;
+                } else {
+                    state.show = Show::Tiles;
+                }
+            }
+            KeyCode::KeyI => {
+                if state.show == Show::Items {
+                    state.show = Show::None;
+                } else {
+                    state.show = Show::Items;
+                }
             }
             KeyCode::ArrowUp | KeyCode::ArrowRight | KeyCode::ArrowLeft | KeyCode::ArrowDown => {
                 if cooldown > 0 {
@@ -296,7 +302,7 @@ pub fn handle_inputs(
                     // TODO
                     // continue;
                 }
-                let new_position = &position + &directions[key];
+                let new_position = &position + &directions[&key];
 
                 // check for collisions
                 let hits = other_positions
@@ -333,7 +339,7 @@ pub fn handle_inputs(
 
                         let (won, attempts, _word) = play(
                             tries,
-                            HashSet::new(),
+                            // HashSet::new(),
                             words_vec,
                             None,
                             false,

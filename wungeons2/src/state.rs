@@ -3,26 +3,29 @@ use std::{
     time::Duration,
 };
 
+use fnv::{FnvHashMap, FnvHashSet};
 // use device_query::{DeviceState, Keycode};
 use rand::{rngs::ThreadRng, Rng};
+use winit::keyboard::{KeyCode, SmolStr};
 
 
 use crate::{
-    components::{get_default_component, Component,  Position, Rect}, effects::AllModifiers, entity::Entity, event::Event, items::Item, letters::{get_starting_tile_points, get_starting_tiles}, rooms::RoomType
+    components::{get_default_component, Component,  Position, Rect}, effects::AllModifiers, entity::Entity, event::Event, items::Item, letters::{get_starting_tile_points, get_starting_tiles}, render::Show, rooms::RoomType
 };
 
 pub struct State {
     pub grid_size: Rect,
     pub events: Vec<Event>,
+    pub keys_pressed: FnvHashMap<KeyCode, String>,
     pub change_events: Vec<Component>,
-    // pub last_pressed_keys: HashSet<KeyCode>,
+    // pub last_pressed_keys: FnvHashSet<KeyCode>,
     // pub device_state: DeviceState,
     pub rng: ThreadRng,
     pub entity_id_counter: usize,
     pub name: String,
 
-    pub entities_map: HashMap<usize, Box<Entity>>,
-    pub component_map: HashMap<Vec<Component>, HashSet<usize>>,
+    pub entities_map: FnvHashMap<usize, Box<Entity>>,
+    pub component_map: FnvHashMap<Vec<Component>, FnvHashSet<usize>>,
     pub system_components: Vec<Vec<Component>>,
     pub rooms: Vec<(Rect, Position, RoomType)>,
     pub hallways: Vec<(Position, Position)>,
@@ -34,11 +37,13 @@ pub struct State {
     pub gold: usize,
     pub fog_enabled: bool,
     pub dialogue_input: String,
-    empty_entites_set: HashSet<usize>,
-    pub show_deck: bool,
+    empty_entites_set: FnvHashSet<usize>,
+    // pub show_deck: bool,
     pub floor: usize,
     pub mods: AllModifiers,
-    pub tile_points: HashMap<char, usize>,
+    pub tile_points: FnvHashMap<char, usize>,
+    pub no_keys_pressed: bool,
+    pub show: Show,
     // pub step_counter: usize,
     // pub systems: Vec<(fn(&mut State, &Vec<Component>), Vec<Component>, bool)>,
 }
@@ -48,25 +53,28 @@ impl State {
         // let mut rng = ;
 
         let mut n = Self {
-            show_deck: false,
+            // show_deck: false,
             grid_size,
             events: vec![],
-            // last_pressed_keys: HashSet::new(),
+            show: Show::None,
+            keys_pressed: FnvHashMap::default(),
+            // last_pressed_keys: FnvHashSet::default(),
             // device_state: DeviceState::new(),
             rng: rand::thread_rng(),
             entity_id_counter: 0,
 
-            entities_map: HashMap::new(),
-            component_map: HashMap::new(),
+            entities_map: FnvHashMap::default(),
+            component_map: FnvHashMap::default(),
             system_components,
             rooms: Vec::new(),
             hallways: Vec::new(),
             change_events: Vec::new(),
             // letters_remaining: Vec::new(),
             // step_counter: 0,
-            // system_components: HashSet::new(),
+            // system_components: FnvHashSet::default(),
             // systems: get_systems(),
             available_letters: Vec::new(),
+            no_keys_pressed: true,
             update_loop_duration: Duration::ZERO,
             render_loop_duration: Duration::ZERO,
 
@@ -75,7 +83,7 @@ impl State {
             fog_enabled: true,
             dialogue_input: "".to_string(),
             name: "".to_string(),
-            empty_entites_set: HashSet::new(),
+            empty_entites_set: FnvHashSet::default(),
             floor: 1,
             mods: AllModifiers::default(),
             tile_points: get_starting_tile_points(),
@@ -85,8 +93,8 @@ impl State {
     }
 
     pub fn refresh_tiles(&mut self) {
-        // let available_letters: HashSet<char> =
-        //     HashSet::from_iter("aerotlisncuyd".to_uppercase().chars());
+        // let available_letters: FnvHashSet<char> =
+        //     FnvHashSet::from_iter("aerotlisncuyd".to_uppercase().chars());
         // let mut letters_remaining = "abcdefghijklmnopqrstuvwxyz".to_uppercase().to_string();
         // // let starting_letters_count = 10;
         // for c in &available_letters {
@@ -106,12 +114,12 @@ impl State {
         // self.letters_remaining = letters_remaining;
     }
 
-    pub fn get_entities(&self, components: &[Component]) -> &HashSet<usize> {
+    pub fn get_entities(&self, components: &[Component]) -> &FnvHashSet<usize> {
         self.component_map.get(components).unwrap_or(&self.empty_entites_set)
     }
 
     // pub fn get_unchosen_letters_if_possible(&mut self, n: usize) -> Vec<char> {
-    //     let mut available_letters: HashSet<char> = HashSet::from_iter("".chars());
+    //     let mut available_letters: FnvHashSet<char> = FnvHashSet::from_iter("".chars());
     //     let mut letters_remaining = self.letters_remaining.clone();
 
     //     while available_letters.len() < n {

@@ -63,7 +63,7 @@ fn main() {
 
 async fn run() {
     let event_loop = EventLoop::new().unwrap();
-    let (width, height) = (800, 600);
+    let (width, height) = (1000, 600);
     let window = Arc::new(
         WindowBuilder::new()
             .with_inner_size(LogicalSize::new(width as f64, height as f64))
@@ -177,7 +177,7 @@ async fn run() {
                                 let mut bounds = TextBounds {
                                     left: (((position.x - 1) * TILE_WIDTH) as f32 * scale) as i32,
                                     top: (((position.y - 1) * TILE_HEIGHT) as f32 * scale) as i32,
-                                    right: (((position.x + TILE_WIDTH + 1) * TILE_WIDTH) as f32
+                                    right: (((position.x + TILE_WIDTH + 1) * TILE_WIDTH * 2) as f32
                                         * scale) as i32,
                                     bottom: (((position.y + TILE_HEIGHT + 1) * TILE_HEIGHT) as f32
                                         * scale) as i32,
@@ -276,7 +276,7 @@ async fn run() {
                                 handle_inputs(
                                     &mut g.game.state,
                                     &[Component::Player],
-                                    Some(*code),
+                                    *code,
                                     *repeat,
                                     text.clone(),
                                 )

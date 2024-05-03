@@ -1,9 +1,5 @@
 use crate::{
-    components::Component,
-    dialogue::dialogue,
-    event::{game_events, Event},
-    sight::sight,
-    state::State,
+    components::Component, dialogue::dialogue, event::{game_events, Event}, inputs::handle_inputs, sight::sight, state::State
 };
 
 pub fn start_up(state: &mut State, _components: &[Component]) {
@@ -52,6 +48,7 @@ pub fn get_systems() -> Vec<(fn(&mut State, &[Component]), Vec<Component>, bool)
             vec![Component::Hidden(None), Component::Position(None)],
             false,
         ),
+        // (handle_inputs, vec![Component::Player], false),
     ]
 }
 
